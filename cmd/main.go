@@ -65,7 +65,7 @@ Prefer short data.`,
 		Long:  `'send' for exfiltrate data, 'receive' for receiving the data`,
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			icmp.IcmpSendRaw(args)
+			icmp.IcmpSendRaw(args[0])
 		},
 	}
 
