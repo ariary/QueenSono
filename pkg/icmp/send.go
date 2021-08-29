@@ -6,6 +6,7 @@ package icmp
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"time"
@@ -29,7 +30,7 @@ var ListenAddr = "0.0.0.0"
 
 func IcmpSendRaw(data string, addr string) (*net.IPAddr, time.Duration, error) {
 	// Start listening for icmp replies
-	c, err := icmp.ListenPacket("ip4:icmp", ListenAddr)
+	c, err := icmp.ListenPacket("ip4:icmp", "localhost")
 	if err != nil {
 		return nil, 0, err
 	}
@@ -65,12 +66,12 @@ func IcmpSendRaw(data string, addr string) (*net.IPAddr, time.Duration, error) {
 	}
 
 	// Wait for a reply
-	reply := make([]byte, 1500)
+	reply := make([]byte, 65507)
 	err = c.SetReadDeadline(time.Now().Add(10 * time.Second))
 	if err != nil {
 		return dst, 0, err
 	}
-	n, peer, err := c.ReadFrom(reply)
+	n, peer, err := c.ReadFrom(reply) //n, peer, err := c.ReadFrom(reply)
 	if err != nil {
 		return dst, 0, err
 	}
@@ -89,4 +90,75 @@ func IcmpSendRaw(data string, addr string) (*net.IPAddr, time.Duration, error) {
 	default:
 		return dst, 0, fmt.Errorf("got %+v from %v; want echo reply", rm, peer)
 	}
+	return dst, duration, nil
+}
+
+// Return a slice of a string chunked with specific sized (string length of each chunk)
+//Thanks https://stackoverflow.com/questions/25686109/split-string-by-length-in-golang
+func Chunks(s string, chunkSize int) []string {
+	if len(s) == 0 {
+		return nil
+	}
+	if chunkSize >= len(s) {
+		return []string{s}
+	}
+	var chunks []string = make([]string, 0, (len(s)-1)/chunkSize+1)
+	currentLen := 0
+	currentStart := 0
+	for i := range s {
+		if currentLen == chunkSize {
+			chunks = append(chunks, s[currentStart:i])
+			currentLen = 0
+			currentStart = i
+		}
+		currentLen++
+	}
+	chunks = append(chunks, s[currentStart:])
+	return chunks
+}
+
+//Wait ICMP message from remote to assert if the message is well received
+func IntegrityCheck(hash string) {
+	c, err := icmp.ListenPacket("ip4:icmp", "localhost")
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	defer c.Close()
+
+	for {
+		packet := make([]byte, 65507)
+		n, peer, err := c.ReadFrom(packet)
+		if err != nil {
+			fmt.Println("Error while reading icmp packet:", err)
+		}
+
+		message, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
+		if err != nil {
+			fmt.Println("Error while parsing icmp message:", err)
+		}
+
+		switch message.Type {
+		case ipv4.ICMPTypeEcho:
+			fmt.Println("Get integrity")
+			echo, _ := message.Body.Marshal(1)
+			fmt.Println("hash received:", string(echo[4:])) //clean
+			if string(echo[4:]) == hash {
+				fmt.Println("Communication end")
+				os.Exit(0)
+			}
+		default:
+			fmt.Errorf("got %+v from %v; want echo request", message, peer)
+		}
+	}
+}
+
+func SendHashedmessage(msg string, addr string) {
+	fmt.Println("addr", addr)
+	// hash := utils.Sha1(msg)
+	// fmt.Println("hash", hash)
+	dst, dur, err := IcmpSendRaw(msg, "localhost")
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Ping %s (%s): %s\n", addr, dst, dur)
 }
