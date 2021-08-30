@@ -11,8 +11,9 @@ https://github.com/cyb3rw01f/icmpExfiltrater (avec command on serverside)
 https://github.com/martinoj2009/ICMPExfil
 
 ## options
-- size of packet
-- delay
+- client :size of packet
+- client: delay
+- server: truncated (accept truncated data, with delay in parameter, wait for delay*NB packet and close all after
 - client: filename or simple message
 - server: save in file or print out
 
