@@ -13,6 +13,9 @@ https://github.com/martinoj2009/ICMPExfil
 ## options
 - size of packet
 - delay
-- filename or simple message 
-- integrity check
+- client: filename or simple message
+- server: save in file or print out
+
+- server: integrity check
 - server: crossbar advancement
+- client: noreply (does not waiting for reply, in case they are filtered by fw)
