@@ -2,6 +2,7 @@ package icmp
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
 	"golang.org/x/net/icmp"
@@ -9,8 +10,8 @@ import (
 )
 
 //Wait for the fistr ICMP packet setting sized of data
-func GetMessageSizeAndSender() (size int, sender string) {
-	c, err := icmp.ListenPacket("ip4:icmp", "192.168.1.39")
+func GetMessageSizeAndSender(listenAddr string) (size int, sender string) {
+	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
@@ -43,8 +44,8 @@ func GetMessageSizeAndSender() (size int, sender string) {
 }
 
 //ICMP server waiting for packet (waiting n packet)
-func Serve(n int) (data string) {
-	c, err := icmp.ListenPacket("ip4:icmp", "192.168.1.39")
+func Serve(listenAddr string, n int) (data string) {
+	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
@@ -72,4 +73,41 @@ func Serve(n int) (data string) {
 		}
 	}
 	return data
+}
+
+//Wait ICMP message from remote to assert if the message is well received
+func IntegrityCheck(hash string) {
+	fmt.Println("launch integrity server")
+	c, err := icmp.ListenPacket("ip4:icmp", "localhost")
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	defer c.Close()
+
+	for {
+		packet := make([]byte, 65507)
+		n, peer, err := c.ReadFrom(packet)
+		if err != nil {
+			fmt.Println("Error while reading icmp packet:", err)
+		}
+
+		message, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
+		if err != nil {
+			fmt.Println("Error while parsing icmp message:", err)
+		}
+
+		switch message.Type {
+		case ipv4.ICMPTypeEcho:
+			fmt.Println("Get integrity")
+			echo, _ := message.Body.Marshal(1)
+			fmt.Println("hash received:", string(echo[4:])) //clean
+			if string(echo[4:]) == hash {
+				fmt.Println("Communication end")
+				os.Exit(0)
+			}
+		default:
+			fmt.Println("DEFAULT!!!!!!!!!!")
+			fmt.Errorf("got %+v from %v; want echo request", message, peer)
+		}
+	}
 }

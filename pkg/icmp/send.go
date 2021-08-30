@@ -27,8 +27,7 @@ var ListenAddr = "0.0.0.0"
 
 // Mostly based on https://github.com/golang/net/blob/master/icmp/ping_test.go
 // All ye beware, there be dragons below...
-
-func IcmpSendRaw(data string, addr string) (*net.IPAddr, time.Duration, error) {
+func IcmpSendRaw(listeningReplyAddr string, data string, addr string) (*net.IPAddr, time.Duration, error) {
 	// Start listening for icmp replies
 	c, err := icmp.ListenPacket("ip4:icmp", "localhost")
 	if err != nil {
@@ -82,15 +81,26 @@ func IcmpSendRaw(data string, addr string) (*net.IPAddr, time.Duration, error) {
 	if err != nil {
 		return dst, 0, err
 	}
-	switch rm.Type {
-	case ipv4.ICMPTypeEchoReply:
-		echo, _ := rm.Body.Marshal(1)
-		fmt.Println(string(echo))
-		return dst, duration, nil
-	default:
+
+	//We do not received echo reply
+	if rm.Type != ipv4.ICMPTypeEchoReply {
 		return dst, 0, fmt.Errorf("got %+v from %v; want echo reply", rm, peer)
 	}
 	return dst, duration, nil
+}
+
+//Send echo the same echo packet while we do not received an echo reply
+func SendWhileNoEchoReply(listeningReplyAddr string, data string, remoteAddr string) {
+	for { //while we do not received echo reply ~ACK, resend it
+		dst, dur, err := IcmpSendRaw(listeningReplyAddr, data, remoteAddr)
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println("Retrying...")
+		} else {
+			fmt.Printf("Ping %s (%s): %s\n", remoteAddr, dst, dur)
+			break
+		}
+	}
 }
 
 // Return a slice of a string chunked with specific sized (string length of each chunk)
@@ -117,48 +127,13 @@ func Chunks(s string, chunkSize int) []string {
 	return chunks
 }
 
-//Wait ICMP message from remote to assert if the message is well received
-func IntegrityCheck(hash string) {
-	c, err := icmp.ListenPacket("ip4:icmp", "localhost")
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
-	defer c.Close()
-
-	for {
-		packet := make([]byte, 65507)
-		n, peer, err := c.ReadFrom(packet)
-		if err != nil {
-			fmt.Println("Error while reading icmp packet:", err)
-		}
-
-		message, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
-		if err != nil {
-			fmt.Println("Error while parsing icmp message:", err)
-		}
-
-		switch message.Type {
-		case ipv4.ICMPTypeEcho:
-			fmt.Println("Get integrity")
-			echo, _ := message.Body.Marshal(1)
-			fmt.Println("hash received:", string(echo[4:])) //clean
-			if string(echo[4:]) == hash {
-				fmt.Println("Communication end")
-				os.Exit(0)
-			}
-		default:
-			fmt.Errorf("got %+v from %v; want echo request", message, peer)
-		}
-	}
-}
-
-func SendHashedmessage(msg string, addr string) {
-	fmt.Println("addr", addr)
+func SendHashedmessage(msg string, remoteAddr string, listenAddr string) {
+	fmt.Println("addr", remoteAddr)
 	// hash := utils.Sha1(msg)
 	// fmt.Println("hash", hash)
-	dst, dur, err := IcmpSendRaw(msg, "localhost")
+	dst, dur, err := IcmpSendRaw(listenAddr, msg, remoteAddr)
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Ping %s (%s): %s\n", addr, dst, dur)
+	log.Printf("Ping %s (%s): %s\n", remoteAddr, dst, dur)
 }
