@@ -15,3 +15,4 @@ https://github.com/martinoj2009/ICMPExfil
 - delay
 - filename or simple message 
 - integrity check
+- server: crossbar advancement
