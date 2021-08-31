@@ -71,14 +71,14 @@ func Serve(listenAddr string, n int, progressBar bool) (data string) {
 		case ipv4.ICMPTypeEcho:
 			echo, _ := message.Body.Marshal(1)
 			m := string(echo[2:]) //clean
-			if !progressBar {
+			if progressBar {
+				bar.Add(1)
+			} else {
 				fmt.Println(m)
 			}
+			data += m
 		default:
 			fmt.Errorf("got %+v from %v; want echo request", message, peer)
-		}
-		if progressBar {
-			bar.Add(1)
 		}
 
 	}
