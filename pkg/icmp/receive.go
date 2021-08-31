@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/schollz/progressbar/v3"
 	"golang.org/x/net/icmp"
@@ -85,37 +86,47 @@ func Serve(listenAddr string, n int, progressBar bool) (data string) {
 	return data
 }
 
-//ICMP server waiting for specific number of packet (waiting n packet)
-// func ServeTemporary(listenAddr string, n int, data chan string) {
-// 	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
-// 	if err != nil {
-// 		fmt.Println("Error:", err)
-// 	}
-// 	defer c.Close()
-// 	for i := 0; i < n; i++ {
-// 		packet := make([]byte, 65507)
-// 		n, peer, err := c.ReadFrom(packet)
-// 		if err != nil {
-// 			fmt.Println("Error while reading icmp packet:", err)
-// 		}
+//CMP server waiting for specific number of packet (waiting n packet)
+func ServeTemporary(listenAddr string, n int, delay int, data chan string) {
+	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	defer c.Close()
 
-// 		message, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
-// 		if err != nil {
-// 			fmt.Println("Error while parsing icmp message:", err)
-// 		}
+	//Retrieve the packet
+	for i := 0; i < n; i++ {
+		go getPacket(c, data)
+	}
 
-// 		switch message.Type {
-// 		case ipv4.ICMPTypeEcho:
-// 			echo, _ := message.Body.Marshal(1)
-// 			m := string(echo[2:]) //clean
-// 			fmt.Println(m)
-// 			data <- m
-// 		default:
-// 			fmt.Errorf("got %+v from %v; want echo request", message, peer)
-// 		}
-// 	}
-// 	return data
-// }
+	//Counter for not waiting indefinitively
+	counter := (n + 2) * delay //let a little offset
+	time.Sleep(time.Duration(counter) * time.Second)
+
+}
+
+func getPacket(c *icmp.PacketConn, data chan string) {
+	packet := make([]byte, 65507)
+	n, peer, err := c.ReadFrom(packet)
+	if err != nil {
+		fmt.Println("Error while reading icmp packet:", err)
+	}
+
+	message, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
+	if err != nil {
+		fmt.Println("Error while parsing icmp message:", err)
+	}
+
+	switch message.Type {
+	case ipv4.ICMPTypeEcho:
+		echo, _ := message.Body.Marshal(1)
+		m := string(echo[2:]) //clean
+		fmt.Println(m)
+		data <- m
+	default:
+		fmt.Errorf("got %+v from %v; want echo request", message, peer)
+	}
+}
 
 //Wait ICMP message from remote to assert if the message is well received
 func IntegrityCheck(hash string) {
