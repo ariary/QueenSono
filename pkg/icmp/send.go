@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
 	"golang.org/x/net/icmp"
@@ -16,30 +17,24 @@ import (
 )
 
 const (
-	// Stolen from https://godoc.org/golang.org/x/net/internal/iana,
-	// can't import "internal" packages
 	ProtocolICMP = 1
 	//ProtocolIPv6ICMP = 58
 )
 
-// Default to listen on all IPv4 interfaces
-var ListenAddr = "0.0.0.0"
-
 // Mostly based on https://github.com/golang/net/blob/master/icmp/ping_test.go
-// All ye beware, there be dragons below...
-func IcmpSendRaw(listeningReplyAddr string, data string, addr string) (*net.IPAddr, time.Duration, error) {
-	// Start listening for icmp replies
+// Send ICMP echo request packet (code 8) to remote and waiting for the echo reply (code 0)
+func IcmpSendRaw(listeningReplyAddr string, remoteAddr string, data string) (*net.IPAddr, error) {
+	// Listen is used to have a PacketConn but we won't wait for reply
 	c, err := icmp.ListenPacket("ip4:icmp", "localhost")
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
-	defer c.Close()
 
+	defer c.Close()
 	// Resolve any DNS (if used) and get the real IP of the target
-	dst, err := net.ResolveIPAddr("ip4", addr)
+	dst, err := net.ResolveIPAddr("ip4", remoteAddr)
 	if err != nil {
-		panic(err)
-		return nil, 0, err
+		return nil, err
 	}
 
 	// Make a new ICMP message
@@ -52,16 +47,35 @@ func IcmpSendRaw(listeningReplyAddr string, data string, addr string) (*net.IPAd
 	}
 	b, err := m.Marshal(nil)
 	if err != nil {
-		return dst, 0, err
+		return dst, err
 	}
 
 	// Send it
-	start := time.Now()
 	n, err := c.WriteTo(b, dst)
 	if err != nil {
-		return dst, 0, err
+		return dst, err
 	} else if n != len(b) {
-		return dst, 0, fmt.Errorf("got %v; want %v", n, len(b))
+		return dst, fmt.Errorf("got %v; want %v", n, len(b))
+	}
+
+	return dst, nil
+}
+
+// Mostly based on https://github.com/golang/net/blob/master/icmp/ping_test.go
+// Send ICMP echo request packet (code 8) to remote and waiting for the echo reply (code 0)
+func IcmpSendAndWaitForReply(listeningReplyAddr string, remoteAddr string, data string) (*net.IPAddr, time.Duration, error) {
+	// Start listening for icmp replies
+	c, err := icmp.ListenPacket("ip4:icmp", "localhost")
+	if err != nil {
+		return nil, 0, err
+	}
+	defer c.Close()
+
+	start := time.Now()
+	dst, err := IcmpSendRaw(listeningReplyAddr, remoteAddr, data)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	// Wait for a reply
@@ -89,22 +103,8 @@ func IcmpSendRaw(listeningReplyAddr string, data string, addr string) (*net.IPAd
 	return dst, duration, nil
 }
 
-//Send echo the same echo packet while we do not received an echo reply
-func SendWhileNoEchoReply(listeningReplyAddr string, data string, remoteAddr string) {
-	for { //while we do not received echo reply ~ACK, resend it
-		dst, dur, err := IcmpSendRaw(listeningReplyAddr, data, remoteAddr)
-		if err != nil {
-			fmt.Println(err)
-			fmt.Println("Retrying...")
-		} else {
-			fmt.Printf("Ping %s (%s): %s\n", remoteAddr, dst, dur)
-			break
-		}
-	}
-}
-
 // Return a slice of a string chunked with specific sized (string length of each chunk)
-//Thanks https://stackoverflow.com/questions/25686109/split-string-by-length-in-golang
+//Thanks https://stackoverflow.comProtocolICMP/questions/25686109/split-string-by-length-in-golang
 func Chunks(s string, chunkSize int) []string {
 	if len(s) == 0 {
 		return nil
@@ -127,11 +127,55 @@ func Chunks(s string, chunkSize int) []string {
 	return chunks
 }
 
+//Send echo the same echo packet while we do not received an echo reply
+func SendWhileNoEchoReply(listeningReplyAddr string, remoteAddr string, data string) {
+	for { //while we do not received echo reply ~ACK, resend it
+		dst, dur, err := IcmpSendAndWaitForReply(listeningReplyAddr, remoteAddr, data)
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println("Retrying...")
+		} else {
+			fmt.Printf("Ping %s (%s): %s\n", remoteAddr, dst, dur)
+			break
+		}
+	}
+}
+
+//Send string to remote using ICMP and waiting for echo reply. You must specify the delay between each packet and the size
+func SendReply(listeningReplyAddr string, remoteAddr string, chunkSize int, delay int, data string) {
+	dataSlice := Chunks(data, chunkSize) //1 character = 1byte , max size of icmp data 65507
+	time.Sleep(time.Duration(delay) * time.Second)
+
+	// Announce the data size
+	SendWhileNoEchoReply(listeningReplyAddr, remoteAddr, strconv.Itoa(len(dataSlice)))
+
+	//Send the data
+	for i := 0; i < len(dataSlice); i++ {
+		SendWhileNoEchoReply(listeningReplyAddr, remoteAddr, dataSlice[i])
+		time.Sleep(time.Duration(delay) * time.Second)
+	}
+}
+
+//Send string to remote using ICMP and waiting for echo reply. You must specify the delay between each packet and the size
+func SendNoReply(listeningReplyAddr string, remoteAddr string, chunkSize int, delay int, data string) {
+	dataSlice := Chunks(data, chunkSize) //1 character = 1byte , max size of icmp data 65507
+	time.Sleep(time.Duration(delay) * time.Second)
+
+	// Announce the data size
+	IcmpSendRaw(listeningReplyAddr, remoteAddr, strconv.Itoa(len(dataSlice)))
+
+	//Send the data
+	for i := 0; i < len(dataSlice); i++ {
+		IcmpSendRaw(listeningReplyAddr, remoteAddr, dataSlice[i])
+		time.Sleep(time.Duration(delay) * time.Second)
+	}
+}
+
 func SendHashedmessage(msg string, remoteAddr string, listenAddr string) {
 	fmt.Println("addr", remoteAddr)
 	// hash := utils.Sha1(msg)
 	// fmt.Println("hash", hash)
-	dst, dur, err := IcmpSendRaw(listenAddr, msg, remoteAddr)
+	dst, dur, err := IcmpSendAndWaitForReply(listenAddr, msg, remoteAddr)
 	if err != nil {
 		panic(err)
 	}
