@@ -29,9 +29,9 @@ it uses the icmp protocol.`,
 
 			data := args[0]
 			if noreply {
-				icmp.SendReply(listenAddr, remoteAddr, chunkSize, delay, data)
-			} else {
 				icmp.SendNoReply(listenAddr, remoteAddr, chunkSize, delay, data)
+			} else {
+				icmp.SendReply(listenAddr, remoteAddr, chunkSize, delay, data)
 			}
 
 		},
@@ -64,12 +64,11 @@ it uses the icmp protocol.`,
 				os.Exit(1)
 			}
 			data := string(b)
-
 			//send it
 			if noreply {
-				icmp.SendReply(listenAddr, remoteAddr, chunkSize, delay, data)
-			} else {
 				icmp.SendNoReply(listenAddr, remoteAddr, chunkSize, delay, data)
+			} else {
+				icmp.SendReply(listenAddr, remoteAddr, chunkSize, delay, data)
 			}
 
 		},
