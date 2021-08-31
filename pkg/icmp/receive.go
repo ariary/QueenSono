@@ -148,7 +148,7 @@ func IntegrityCheck(hash string) {
 				os.Exit(0)
 			}
 		default:
-			fmt.Println("DEFAULT!!!!!!!!!!")
+			//fmt.Println("DEFAULT!!!!!!!!!!")
 			fmt.Errorf("got %+v from %v; want echo request", message, peer)
 		}
 	}
