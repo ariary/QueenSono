@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	qsmessage "github.com/ariary/QueenSono/pkg/message"
 	"github.com/schollz/progressbar/v3"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
@@ -72,9 +73,9 @@ func Serve(listenAddr string, n int, progressBar bool) (data string, missingPack
 		go func(c *icmp.PacketConn, dataChunked []string, i int, indexes map[int]int, bar *progressbar.ProgressBar) {
 			defer wg.Done()
 			if progressBar {
-				getPacketAndBarUpdate(bar, c, dataChunked, i, indexes)
+				getPacketAndBarUpdate(bar, c, dataChunked, indexes)
 			} else {
-				getPacket(c, dataChunked, i, indexes)
+				getPacket(c, dataChunked, indexes)
 			}
 		}(c, dataChunked, i, indexes, bar)
 	}
@@ -98,7 +99,7 @@ func ServeTemporary(listenAddr string, n int, progressBar bool, delay int) (data
 	if progressBar {
 		bar = progressbar.Default(int64(n))
 	}
-	fmt.Println("here")
+
 	//ICMP Serverlistening
 	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
 	if err != nil {
@@ -115,9 +116,9 @@ func ServeTemporary(listenAddr string, n int, progressBar bool, delay int) (data
 	//Retrieve the packet
 	for i := 0; i < n; i++ {
 		if progressBar {
-			go getPacketAndBarUpdate(bar, c, dataChunked, i, indexes)
+			go getPacketAndBarUpdate(bar, c, dataChunked, indexes)
 		} else {
-			go getPacket(c, dataChunked, i, indexes)
+			go getPacket(c, dataChunked, indexes)
 		}
 	}
 
@@ -134,7 +135,7 @@ func ServeTemporary(listenAddr string, n int, progressBar bool, delay int) (data
 }
 
 //Get a single packet then add the data to the slice (= chunked data) and remove the index from the indexes
-func getPacket(c *icmp.PacketConn, data []string, index int, indexes map[int]int) {
+func getPacket(c *icmp.PacketConn, data []string, indexes map[int]int) {
 	packet := make([]byte, 65507)
 	n, peer, err := c.ReadFrom(packet)
 	if err != nil {
@@ -149,9 +150,9 @@ func getPacket(c *icmp.PacketConn, data []string, index int, indexes map[int]int
 	switch message.Type {
 	case ipv4.ICMPTypeEcho:
 		echo, _ := message.Body.Marshal(1)
-		m := string(echo[2:]) //clean
-		//fmt.Println("index:", index, "value:", m)
-		data[index] = m
+		//m := string(echo[2:]) //clean
+		msg, index := qsmessage.QueenSonoUnmarshall(string(echo[4:])) //echo has 4 bytes which are added, don't know why
+		data[index] = msg
 		delete(indexes, index)
 	default:
 		fmt.Errorf("got %+v from %v; want echo request", message, peer)
@@ -159,7 +160,7 @@ func getPacket(c *icmp.PacketConn, data []string, index int, indexes map[int]int
 }
 
 //Get a single packet then add the data to the slice (= chunked data), remove the index from the indexes & update the crossbar
-func getPacketAndBarUpdate(bar *progressbar.ProgressBar, c *icmp.PacketConn, data []string, index int, indexes map[int]int) {
+func getPacketAndBarUpdate(bar *progressbar.ProgressBar, c *icmp.PacketConn, data []string, indexes map[int]int) {
 	packet := make([]byte, 65507)
 	n, peer, err := c.ReadFrom(packet)
 	if err != nil {
@@ -174,11 +175,11 @@ func getPacketAndBarUpdate(bar *progressbar.ProgressBar, c *icmp.PacketConn, dat
 	switch message.Type {
 	case ipv4.ICMPTypeEcho:
 		echo, _ := message.Body.Marshal(1)
-		m := string(echo[2:]) //clean
-		bar.Add(1)
-
-		data[index] = m
+		//m := string(echo[2:]) //clean
+		msg, index := qsmessage.QueenSonoUnmarshall(string(echo[4:])) //echo has 4 bytes which are added, don't know why
+		data[index] = msg
 		delete(indexes, index)
+		bar.Add(1)
 	default:
 		fmt.Errorf("got %+v from %v; want echo request", message, peer)
 	}
