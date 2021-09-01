@@ -1,19 +1,3 @@
-// package main
-
-// import (
-// 	"fmt"
-
-// 	"github.com/ariary/QueenSono/pkg/icmp"
-// )
-
-// func main() {
-// 	listenAddr := "10.0.2.15"
-// 	size, sender := icmp.GetMessageSizeAndSender(listenAddr)
-// 	fmt.Println("Sender:", sender, ", Number of packet wanted:", size)
-// 	message := icmp.Serve(listenAddr, size)
-// 	fmt.Println("Message received:", message)
-// 	//icmp.SendHashedmessage(message, sender) //Integrity check
-// }
 package main
 
 import (
@@ -44,8 +28,17 @@ it uses the icmp protocol.`,
 
 			size, sender := icmp.GetMessageSizeAndSender(listenAddr)
 			fmt.Println("Sender:", sender, ", Number of packet wanted:", size)
-			message := icmp.Serve(listenAddr, size, progressBar)
-			//icmp.SendHashedmessage(message, sender) //Integrity check
+			message, missingPacketsIndexes := icmp.Serve(listenAddr, size, progressBar)
+			//icmp.SendHashedmessage(message, sender)
+			//Integrity check
+			//Print missing packet
+			if len(missingPacketsIndexes) > 0 {
+				fmt.Println("Missing packet:")
+				for i := 0; i < len(missingPacketsIndexes); i++ {
+					fmt.Print("", missingPacketsIndexes[i])
+				}
+				fmt.Println()
+			}
 			if filename != "" {
 				f, err := os.Create(filename)
 				if err != nil {
@@ -66,23 +59,27 @@ it uses the icmp protocol.`,
 
 	var cmdTruncated = &cobra.Command{
 		Use:   "truncated [delay]",
-		Short: "receive data from icmp packet and do not wait indefinitively for all the packet.",
-		Long:  `rreceive data from icmp packet and do not wait indefinitively for all the packet. Hence you could receive truncated data`,
+		Short: "receive data from icmp packet and do not wait indefinitively for all the packet.(indicate the packet missing at the end)",
+		Long:  `receive data from icmp packet and do not wait indefinitively for all the packet. Hence you could receive truncated data. If the data isn't fully retrieved  it return the index of the missing packet`,
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 
 			size, sender := icmp.GetMessageSizeAndSender(listenAddr)
 			fmt.Println("Sender:", sender, ", Number of packet wanted:", size)
-			data := make(chan string)
-			//go countdown(strconv.Atoi(args[0]),size)
 			delay, err := strconv.Atoi(args[0])
 			if err != nil {
 				panic(err)
 			}
-			icmp.ServeTemporary(listenAddr, size, delay, data)
-			message := <-data
-			fmt.Println("Message received:", message)
+			message, missingPacketsIndexes := icmp.ServeTemporary(listenAddr, size, progressBar, delay)
 			//icmp.SendHashedmessage(message, sender) //Integrity check
+			//Print missing packet
+			if len(missingPacketsIndexes) > 0 {
+				fmt.Println("Missing packet:")
+				for i := 0; i < len(missingPacketsIndexes); i++ {
+					fmt.Print(missingPacketsIndexes[i], " ")
+				}
+				fmt.Println()
+			}
 
 			if filename != "" {
 				f, err := os.Create(filename)
