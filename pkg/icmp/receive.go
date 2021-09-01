@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/schollz/progressbar/v3"
@@ -46,7 +48,7 @@ func GetMessageSizeAndSender(listenAddr string) (size int, sender string) {
 }
 
 //ICMP server waiting for packet (waiting n packet)
-func Serve(listenAddr string, n int, progressBar bool) (data string) {
+func Serve(listenAddr string, n int, progressBar bool) (data string, missingPacketIndexes []int) {
 	var bar *progressbar.ProgressBar
 	if progressBar {
 		bar = progressbar.Default(int64(n))
@@ -56,56 +58,83 @@ func Serve(listenAddr string, n int, progressBar bool) (data string) {
 		fmt.Println("Error:", err)
 	}
 	defer c.Close()
+
+	dataChunked := make([]string, n)
+	//prepare map of indexes (map cause it  complexity to delete an element is 0(1), slice 0(n))
+	indexes := make(map[int]int)
 	for i := 0; i < n; i++ {
-		packet := make([]byte, 65507)
-		n, peer, err := c.ReadFrom(packet)
-		if err != nil {
-			fmt.Println("Error while reading icmp packet:", err)
-		}
-
-		message, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
-		if err != nil {
-			fmt.Println("Error while parsing icmp message:", err)
-		}
-
-		switch message.Type {
-		case ipv4.ICMPTypeEcho:
-			echo, _ := message.Body.Marshal(1)
-			m := string(echo[2:]) //clean
-			if progressBar {
-				bar.Add(1)
-			} else {
-				fmt.Println(m)
-			}
-			data += m
-		default:
-			fmt.Errorf("got %+v from %v; want echo request", message, peer)
-		}
-
+		indexes[i] = 0 //the value does not have any interest
 	}
-	return data
+	//Retrieve the n packet (waiting till we have all packets)
+	var wg sync.WaitGroup
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		go func(c *icmp.PacketConn, dataChunked []string, i int, indexes map[int]int, bar *progressbar.ProgressBar) {
+			defer wg.Done()
+			if progressBar {
+				getPacketAndBarUpdate(bar, c, dataChunked, i, indexes)
+			} else {
+				getPacket(c, dataChunked, i, indexes)
+			}
+		}(c, dataChunked, i, indexes, bar)
+	}
+
+	wg.Wait()
+
+	data = strings.Join(dataChunked, "")
+
+	missingPacketIndexes = make([]int, 0, len(indexes))
+	for index := range indexes {
+		missingPacketIndexes = append(missingPacketIndexes, index)
+	}
+	return data, missingPacketIndexes
 }
 
-//CMP server waiting for specific number of packet (waiting n packet)
-func ServeTemporary(listenAddr string, n int, delay int, data chan string) {
+//ICMP server waiting for specific number of packet (waiting n packet) but that stop working after (n+2)*delay seconds
+// return a string with the data section of each packet concatened and the index of the packet missing
+func ServeTemporary(listenAddr string, n int, progressBar bool, delay int) (data string, missingPacketIndexes []int) {
+	//crossBar
+	var bar *progressbar.ProgressBar
+	if progressBar {
+		bar = progressbar.Default(int64(n))
+	}
+	fmt.Println("here")
+	//ICMP Serverlistening
 	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
 	defer c.Close()
 
+	dataChunked := make([]string, n)
+	indexes := make(map[int]int) //prepare map of indexes (map cause it  complexity to delete an element is 0(1), slice 0(n))
+	for i := 0; i < n; i++ {
+		indexes[i] = 0 //the value does not have any interest
+	}
+
 	//Retrieve the packet
 	for i := 0; i < n; i++ {
-		go getPacket(c, data)
+		if progressBar {
+			go getPacketAndBarUpdate(bar, c, dataChunked, i, indexes)
+		} else {
+			go getPacket(c, dataChunked, i, indexes)
+		}
 	}
 
 	//Counter for not waiting indefinitively
 	counter := (n + 2) * delay //let a little offset
 	time.Sleep(time.Duration(counter) * time.Second)
+	data = strings.Join(dataChunked, "")
 
+	missingPacketIndexes = make([]int, 0, len(indexes))
+	for index := range indexes {
+		missingPacketIndexes = append(missingPacketIndexes, index)
+	}
+	return data, missingPacketIndexes
 }
 
-func getPacket(c *icmp.PacketConn, data chan string) {
+//Get a single packet then add the data to the slice (= chunked data) and remove the index from the indexes
+func getPacket(c *icmp.PacketConn, data []string, index int, indexes map[int]int) {
 	packet := make([]byte, 65507)
 	n, peer, err := c.ReadFrom(packet)
 	if err != nil {
@@ -121,8 +150,35 @@ func getPacket(c *icmp.PacketConn, data chan string) {
 	case ipv4.ICMPTypeEcho:
 		echo, _ := message.Body.Marshal(1)
 		m := string(echo[2:]) //clean
-		fmt.Println(m)
-		data <- m
+		//fmt.Println("index:", index, "value:", m)
+		data[index] = m
+		delete(indexes, index)
+	default:
+		fmt.Errorf("got %+v from %v; want echo request", message, peer)
+	}
+}
+
+//Get a single packet then add the data to the slice (= chunked data), remove the index from the indexes & update the crossbar
+func getPacketAndBarUpdate(bar *progressbar.ProgressBar, c *icmp.PacketConn, data []string, index int, indexes map[int]int) {
+	packet := make([]byte, 65507)
+	n, peer, err := c.ReadFrom(packet)
+	if err != nil {
+		fmt.Println("Error while reading icmp packet:", err)
+	}
+
+	message, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
+	if err != nil {
+		fmt.Println("Error while parsing icmp message:", err)
+	}
+
+	switch message.Type {
+	case ipv4.ICMPTypeEcho:
+		echo, _ := message.Body.Marshal(1)
+		m := string(echo[2:]) //clean
+		bar.Add(1)
+
+		data[index] = m
+		delete(indexes, index)
 	default:
 		fmt.Errorf("got %+v from %v; want echo request", message, peer)
 	}
