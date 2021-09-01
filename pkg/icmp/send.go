@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ariary/QueenSono/pkg/message"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 )
@@ -103,8 +104,8 @@ func IcmpSendAndWaitForReply(listeningReplyAddr string, remoteAddr string, data 
 	return dst, duration, nil
 }
 
-// Return a slice of a string chunked with specific sized (string length of each chunk)
-//Thanks https://stackoverflow.comProtocolICMP/questions/25686109/split-string-by-length-in-golang
+// Return a slice of a the string chunked with specific length (string length of each chunk)
+//Thanks to https://stackoverflow.comProtocolICMP/questions/25686109/split-string-by-length-in-golang
 func Chunks(s string, chunkSize int) []string {
 	if len(s) == 0 {
 		return nil
@@ -135,7 +136,7 @@ func SendWhileNoEchoReply(listeningReplyAddr string, remoteAddr string, data str
 			fmt.Println(err)
 			fmt.Println("Retrying...")
 		} else {
-			fmt.Printf("Ping %s (%s): %s\n", remoteAddr, dst, dur)
+			fmt.Printf("PING %s (%s): %s\n", remoteAddr, dst, dur)
 			break
 		}
 	}
@@ -144,6 +145,7 @@ func SendWhileNoEchoReply(listeningReplyAddr string, remoteAddr string, data str
 //Send string to remote using ICMP and waiting for echo reply. You must specify the delay between each packet and the size
 func SendReply(listeningReplyAddr string, remoteAddr string, chunkSize int, delay int, data string) {
 	dataSlice := Chunks(data, chunkSize) //1 character = 1byte , max size of icmp data 65507
+	dataSlice = message.QueenSonoMarshall(dataSlice)
 	time.Sleep(time.Duration(delay) * time.Second)
 
 	// Announce the data size
@@ -159,6 +161,7 @@ func SendReply(listeningReplyAddr string, remoteAddr string, chunkSize int, dela
 //Send string to remote using ICMP and waiting for echo reply. You must specify the delay between each packet and the size
 func SendNoReply(listeningReplyAddr string, remoteAddr string, chunkSize int, delay int, data string) {
 	dataSlice := Chunks(data, chunkSize) //1 character = 1byte , max size of icmp data 65507
+	dataSlice = message.QueenSonoMarshall(dataSlice)
 	time.Sleep(time.Duration(delay) * time.Second)
 
 	// Announce the data size
@@ -179,5 +182,5 @@ func SendHashedmessage(msg string, remoteAddr string, listenAddr string) {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Ping %s (%s): %s\n", remoteAddr, dst, dur)
+	log.Printf("PING %s (%s): %s\n", remoteAddr, dst, dur)
 }
