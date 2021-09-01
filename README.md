@@ -20,3 +20,5 @@ https://github.com/martinoj2009/ICMPExfil
 - server: integrity check
 - server: crossbar advancement
 - client: noreply (does not waiting for reply, in case they are filtered by fw)
+
+<p hidden>add encryption</p>
