@@ -57,7 +57,7 @@ On local machine:
     <code>-l 0.0.0.0</code>listen on all interfaces for ICMP packet
     </li>
     <li>
-      <code>-f received_bible.txt</code> save received data in a text
+      <code>-f received_bible.txt</code> save received data in a file
     </li>
     <li><code>-p</code> show a progress bar of received data </li>
 
