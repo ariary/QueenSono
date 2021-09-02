@@ -8,7 +8,7 @@
     <br>
     <strong>
     <a href="https://github.com/ariary/QueenSono/blob/main/README.md#install">Install it</a>
-    .
+    ·
     <a href="https://github.com/ariary/QueenSono/blob/main/README.md#usage">Use it</a>
     ·
     <a href="https://github.com/ariary/QueenSono/blob/main/README.md#notes">Notes</a>
