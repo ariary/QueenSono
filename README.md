@@ -20,6 +20,7 @@
 
 ## Install
  *\> Install the binary from source*
+ 
 Clone the repo and download the dependencies locally:
 ```    
 git clone https://github.com/ariary/QueenSono.git
