@@ -5,6 +5,7 @@
   <p align="center">
   QueenSono tool only relies on the fact that ICMP protocol isn't monitored. It is quite common. It could also been used within a system with basic ICMP inspection (ie. frequency and content length watcher). Try to imitate <a href="https://github.com/ytisf/PyExfil">PyExfil</a> (and others) with the idea that the target machine does not necessary have python installed (so provide a binary could be useful)
     <br />
+    <br>
     <strong>
     <a href="https://github.com/othneildrew/Best-README-Template">How to install it</a>
     .
@@ -48,7 +49,7 @@ On my local machine:
     $ qsreceiver receive -l 0.0.0.0 -p -f received_bible.txt
 
 <details>
-  <summary><b>Explanation<b></summary>
+  <summary><b>Explanation</b></summary>
     <li>
     <code>-l 0.0.0.0</code>listen on all interfaces for ICMP packet
     </li>
