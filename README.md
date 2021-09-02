@@ -40,7 +40,7 @@ make before.build
 
 `qssender` is the binary which will send ICMP packet  to the listener , so it is the binary you have to transfer on your target machine. 
 
-`qsreceiver` is the listener on your local machine (or wherever you can receive icmp packet)
+`qsreceiver` is the listener on your local machine (or wherever you could receive icmp packet)
 
 All commands and flags of the binaries could be found using `--help`
 
