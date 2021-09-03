@@ -35,7 +35,7 @@ it uses the icmp protocol.`,
 			if len(missingPacketsIndexes) > 0 {
 				fmt.Println("Missing packet:")
 				for i := 0; i < len(missingPacketsIndexes); i++ {
-					fmt.Print("", missingPacketsIndexes[i])
+					fmt.Print(missingPacketsIndexes[i], " ")
 				}
 				fmt.Println()
 			}
