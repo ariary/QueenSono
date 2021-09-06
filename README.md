@@ -47,7 +47,7 @@ All commands and flags of the binaries could be found using `--help`
 ### Example 1: Send with "ACK"
 *\> In this example we want to send a big file and look after echo reply to ackowledge the reception of the packets (ACK).*
 
-![demo](https://github.com/ariary/AravisFS/blob/main/img/adretctldemo.gif)
+![demo](https://github.com/ariary/QueenSono/blob/main/img/qssono.gif)
 
 On local machine:
 
