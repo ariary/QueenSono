@@ -47,6 +47,8 @@ All commands and flags of the binaries could be found using `--help`
 ### Example 1: Send with "ACK"
 *\> In this example we want to send a big file and look after echo reply to ackowledge the reception of the packets (ACK).*
 
+![demo](https://github.com/ariary/AravisFS/blob/main/img/adretctldemo.gif)
+
 On local machine:
 
     $ qsreceiver receive -l 0.0.0.0 -p -f received_bible.txt
@@ -85,6 +87,9 @@ On target machine:
 
 ### Example 2: Send without "ACK"
 *\> In this example we want to send a message without waiting for echo reply (it could be useful in the case if target firewall filter incoming icmp packet)*
+
+![demo](https://github.com/ariary/AravisFS/blob/main/img/adretctldemo.gif)
+
 
 On local machine:
 
