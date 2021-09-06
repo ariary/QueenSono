@@ -88,7 +88,7 @@ On target machine:
 ### Example 2: Send without "ACK"
 *\> In this example we want to send a message without waiting for echo reply (it could be useful in the case if target firewall filter incoming icmp packet)*
 
-![demo](https://github.com/ariary/AravisFS/blob/main/img/adretctldemo.gif)
+![demo](https://github.com/ariary/QueenSono/blob/main/img/qssono-trunc.gif?raw=true)
 
 
 On local machine:
