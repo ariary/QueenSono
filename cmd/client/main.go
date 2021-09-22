@@ -18,6 +18,7 @@ func main() {
 	var chunkSize int
 	var delay int
 	var noreply bool
+	var encryption bool
 
 	var cmdSend = &cobra.Command{ //basic send (send string from stdin)
 		Use:   "send [string to send]",
@@ -48,6 +49,8 @@ it uses the icmp protocol.`,
 	cmdSend.PersistentFlags().IntVarP(&delay, "delay", "d", 4, "delay between each packet sent")
 
 	cmdSend.PersistentFlags().BoolVarP(&noreply, "noreply", "N", false, "do not wait for echo reply")
+
+	cmdSend.PersistentFlags().BoolVarP(&encryption, "encrypt", "e", false, "use encryption for data exchange")
 
 	//CMD SEND FILE
 	var cmdSendFile = &cobra.Command{

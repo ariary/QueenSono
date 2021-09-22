@@ -7,16 +7,17 @@ import (
 	"strconv"
 
 	"github.com/ariary/QueenSono/pkg/icmp"
+	"github.com/ariary/QueenSono/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
 func main() {
-	//TODO truncated,integrity,crossbar,
 	//CMD RECEIVE
 	//receive var
 	var listenAddr string
 	var filename string
 	var progressBar bool
+	var encryption bool
 
 	var cmdReceive = &cobra.Command{
 		Use:   "receive",
@@ -26,6 +27,12 @@ it uses the icmp protocol.`,
 		Args: cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 
+			if encryption {
+				//privKey, pubKey := utils.GenerateKeyPair(1024)
+				_, pubKey := utils.GenerateKeyPair(1024)
+				fmt.Println("Public Key (copy and paste it in qsreceiver):")
+				fmt.Println(string(utils.PublicKeyToBytes(pubKey)))
+			}
 			size, sender := icmp.GetMessageSizeAndSender(listenAddr)
 			fmt.Println("Sender:", sender, ", Number of packet wanted:", size)
 			message, missingPacketsIndexes := icmp.Serve(listenAddr, size, progressBar)
@@ -57,6 +64,13 @@ it uses the icmp protocol.`,
 		},
 	}
 
+	//cmdReceive flag handling
+	cmdReceive.PersistentFlags().StringVarP(&listenAddr, "listen", "l", "0.0.0.0", "address used for listening icmp packet")
+	cmdReceive.PersistentFlags().StringVarP(&filename, "filename", "f", "", "filename where stored the data received")
+	cmdReceive.PersistentFlags().BoolVarP(&progressBar, "progress-bar", "p", false, "print progression of the data reception")
+	cmdReceive.PersistentFlags().BoolVarP(&encryption, "encrypt", "e", false, "use encryption for data exchange")
+
+	//CMD TRUNCATED
 	var cmdTruncated = &cobra.Command{
 		Use:   "truncated [delay]",
 		Short: "receive data from icmp packet and do not wait indefinitively for all the packet.(indicate the packet missing at the end)",
@@ -98,11 +112,6 @@ it uses the icmp protocol.`,
 			}
 		},
 	}
-
-	//cmdReceive flag handling
-	cmdReceive.PersistentFlags().StringVarP(&listenAddr, "listen", "l", "0.0.0.0", "address used for listening icmp packet")
-	cmdReceive.PersistentFlags().StringVarP(&filename, "filename", "f", "", "filename where stored the data received")
-	cmdReceive.PersistentFlags().BoolVarP(&progressBar, "progress-bar", "p", false, "print progression of the data reception")
 
 	var rootCmd = &cobra.Command{Use: "qsreceiver"}
 	rootCmd.AddCommand(cmdReceive)
