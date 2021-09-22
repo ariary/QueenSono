@@ -119,23 +119,23 @@ On target machine:
 
 On local machine:
 
-    $ qsreceiver receive -l 0.0.0.0 -encr
+    $ qsreceiver receive -l 0.0.0.0 --encrypt 
     <OUTPUT PUBLIC KEY>
  
 
 <details>
   <summary> <b>Explanation</b></summary>
-    <li><code>-encr</code> use encryption exchange. It will generate public/private key. The public one will be used by <code>qssender</code> to encrypt data, the private one is used to decrypt it with <code>receiver</code>
+    <li><code>--encrypt </code> use encryption exchange. It will generate public/private key. The public one will be used by <code>qssender</code> to encrypt data, the private one is used to decrypt it with <code>receiver</code>
 </details>
 
 
 On target machine:
 
-    $ qssender send "don't worry this message was encrypted with the public key. only you could decrypt it" -d 1 -l 127.0.0.1 -r 10.0.0.190 go.mod -s 5 -encry <public_key_from_qsreceiver_output>
+    $ qssender send "don't worry this message was encrypted with the public key. only you could decrypt it" -d 1 -l 127.0.0.1 -r 10.0.0.190 go.mod -s 5 --encrypt <public_key_from_qsreceiver_output>
 <details>
   <summary>Explanation</summary>
     <li>
-    <code>-encr</code> provide key for data encryption. Use the one provided by the <code>qsreceiver</code> command
+    <code>--encrypt </code> provide key for data encryption. Use the one provided by the <code>qsreceiver</code> command
     </li>
 </details>
 
