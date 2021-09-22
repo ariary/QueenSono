@@ -5,8 +5,11 @@ import (
 	"crypto/rsa"
 	"crypto/sha512"
 	"crypto/x509"
+	b64 "encoding/base64"
 	"encoding/pem"
+	"fmt"
 	"log"
+	"os"
 )
 
 // GenerateKeyPair generates a new key pair
@@ -30,8 +33,8 @@ func PrivateKeyToBytes(priv *rsa.PrivateKey) []byte {
 	return privBytes
 }
 
-// PublicKeyToBytes public key to bytes
-func PublicKeyToBytes(pub *rsa.PublicKey) []byte {
+// PublicKeyToBytes public key to base64 encoding
+func PublicKeyToBase64(pub *rsa.PublicKey) string {
 	pubASN1, err := x509.MarshalPKIXPublicKey(pub)
 	if err != nil {
 		log.Fatal(err)
@@ -41,8 +44,8 @@ func PublicKeyToBytes(pub *rsa.PublicKey) []byte {
 		Type:  "RSA PUBLIC KEY",
 		Bytes: pubASN1,
 	})
-
-	return pubBytes
+	pubEnc := b64.RawStdEncoding.EncodeToString(pubBytes)
+	return pubEnc
 }
 
 // BytesToPrivateKey bytes to private key
@@ -65,12 +68,17 @@ func BytesToPrivateKey(priv []byte) *rsa.PrivateKey {
 	return key
 }
 
-// BytesToPublicKey bytes to public key
-func BytesToPublicKey(pub []byte) *rsa.PublicKey {
-	block, _ := pem.Decode(pub)
+// Base64ToPublicKey base64 encoded to public key
+func Base64ToPublicKey(pub string) *rsa.PublicKey {
+	pubDec, err := b64.RawStdEncoding.DecodeString(pub)
+	fmt.Println(string(pubDec))
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	block, _ := pem.Decode(pubDec)
 	enc := x509.IsEncryptedPEMBlock(block)
 	b := block.Bytes
-	var err error
 	if enc {
 		log.Println("is encrypted pem block")
 		b, err = x509.DecryptPEMBlock(block, nil)

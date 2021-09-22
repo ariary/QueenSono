@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ariary/QueenSono/pkg/icmp"
+	"github.com/ariary/QueenSono/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +19,7 @@ func main() {
 	var chunkSize int
 	var delay int
 	var noreply bool
-	var encryption bool
+	var encryption string
 
 	var cmdSend = &cobra.Command{ //basic send (send string from stdin)
 		Use:   "send [string to send]",
@@ -27,7 +28,10 @@ func main() {
 it uses the icmp protocol.`,
 		Args: cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-
+			if encryption != "" {
+				pubKey := utils.Base64ToPublicKey(encryption)
+				fmt.Println(utils.PublicKeyToBase64(pubKey))
+			}
 			data := args[0]
 			if noreply {
 				icmp.SendNoReply(listenAddr, remoteAddr, chunkSize, delay, data)
@@ -50,7 +54,7 @@ it uses the icmp protocol.`,
 
 	cmdSend.PersistentFlags().BoolVarP(&noreply, "noreply", "N", false, "do not wait for echo reply")
 
-	cmdSend.PersistentFlags().BoolVarP(&encryption, "encrypt", "e", false, "use encryption for data exchange")
+	cmdSend.PersistentFlags().StringVarP(&encryption, "encrypt", "e", "", "use encryption for data exchange (provide public key)")
 
 	//CMD SEND FILE
 	var cmdSendFile = &cobra.Command{

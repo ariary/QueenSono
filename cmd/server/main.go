@@ -30,8 +30,9 @@ it uses the icmp protocol.`,
 			if encryption {
 				//privKey, pubKey := utils.GenerateKeyPair(1024)
 				_, pubKey := utils.GenerateKeyPair(1024)
+				pubKeyEnc := utils.PublicKeyToBase64(pubKey)
 				fmt.Println("Public Key (copy and paste it in qsreceiver):")
-				fmt.Println(string(utils.PublicKeyToBytes(pubKey)))
+				fmt.Println(pubKeyEnc)
 			}
 			size, sender := icmp.GetMessageSizeAndSender(listenAddr)
 			fmt.Println("Sender:", sender, ", Number of packet wanted:", size)
