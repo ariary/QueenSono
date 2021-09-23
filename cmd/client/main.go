@@ -28,11 +28,13 @@ func main() {
 it uses the icmp protocol.`,
 		Args: cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			var data string
 			if encryption != "" {
 				pubKey := utils.Base64ToPublicKey(encryption)
-				fmt.Println(utils.PublicKeyToBase64(pubKey))
+				data = string(utils.EncryptWithPublicKey([]byte(args[0]), pubKey)) //send byte instead? (compare byte at both endpoint)
+			} else {
+				data = args[0]
 			}
-			data := args[0]
 			if noreply {
 				icmp.SendNoReply(listenAddr, remoteAddr, chunkSize, delay, data)
 			} else {
