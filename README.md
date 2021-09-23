@@ -114,7 +114,7 @@ On target machine:
 </details>
 
 
-### Example 3: Send encrypted data
+### 🚧 Example 3: Send encrypted data
 *\> In this example we want to send an encrypted message. As the command line could be spied on we use asymmetric encryption*
 
 On local machine:
