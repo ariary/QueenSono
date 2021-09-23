@@ -107,7 +107,7 @@ On target machine:
 
     $ qssender send "thisisatest i want to send a string w/o waiting for the echo reply" -d 1 -l 127.0.0.1 -r 10.0.0.190 -s 1 -N
 <details>
-  <summary>Explanation</summary>
+  <summary><b>Explanation</b></summary>
     <li>
     <code>-N</code> noreply option (don't wait for <i>echo reply</i>)
     </li>
