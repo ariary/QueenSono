@@ -105,7 +105,7 @@ On local machine:
 
 On target machine:
 
-    $ qssender send "thisisatest i want to send a string w/o waiting for the echo reply" -d 1 -l 127.0.0.1 -r 10.0.0.190 go.mod -s 1 -N
+    $ qssender send "thisisatest i want to send a string w/o waiting for the echo reply" -d 1 -l 127.0.0.1 -r 10.0.0.190 -s 1 -N
 <details>
   <summary>Explanation</summary>
     <li>
