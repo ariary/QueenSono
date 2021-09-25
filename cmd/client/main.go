@@ -19,7 +19,7 @@ func main() {
 	var chunkSize int
 	var delay int
 	var noreply bool
-	var encryption string
+	var key string
 
 	var cmdSend = &cobra.Command{ //basic send (send string from stdin)
 		Use:   "send [string to send]",
@@ -29,10 +29,10 @@ it uses the icmp protocol.`,
 		Args: cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			var data string
-			if encryption != "" {
-				pubKey := utils.Base64ToPublicKey(encryption)
+			if key != "" {
+				pubKey := utils.Base64ToPublicKey(key)
 				enc := utils.Base64EncryptWithPublicKey([]byte(args[0]), pubKey) //same msg, and key but different output? normal behaviour
-				data = enc                                                       //send byte instead? (compare byte at both endpoint)
+				data = enc
 			} else {
 				data = args[0]
 			}
@@ -57,7 +57,7 @@ it uses the icmp protocol.`,
 
 	cmdSend.PersistentFlags().BoolVarP(&noreply, "noreply", "N", false, "do not wait for echo reply")
 
-	cmdSend.PersistentFlags().StringVarP(&encryption, "encrypt", "e", "", "use encryption for data exchange (provide public key)")
+	cmdSend.PersistentFlags().StringVarP(&key, "key", "k", "", "key used for data encryption (provide public key)")
 
 	//CMD SEND FILE
 	var cmdSendFile = &cobra.Command{
@@ -73,7 +73,15 @@ it uses the icmp protocol.`,
 				fmt.Print(err)
 				os.Exit(1)
 			}
-			data := string(b)
+
+			var data string
+			if key != "" {
+				pubKey := utils.Base64ToPublicKey(key)
+				enc := utils.Base64EncryptWithPublicKey(b, pubKey) //same msg, and key but different output? normal behaviour
+				data = enc
+			} else {
+				data = string(b)
+			}
 			//send it
 			if noreply {
 				icmp.SendNoReply(listenAddr, remoteAddr, chunkSize, delay, data)
