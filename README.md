@@ -45,7 +45,7 @@ make before.build
 
 All commands and flags of the binaries could be found using `--help`
 
-### Example 1: Send with "ACK"
+### Example 1: Send with "ACK" 🔙
 *\> In this example we want to send a big file and look after echo reply to ackowledge the reception of the packets (ACK).*
 
 ![demo](https://github.com/ariary/QueenSono/blob/main/img/qssono.gif)
@@ -86,7 +86,7 @@ On target machine:
 </details>
 
 
-### Example 2: Send without "ACK"
+### Example 2: Send without "ACK" 🙈
 *\> In this example we want to send a message without waiting for echo reply (it could be useful in  case the target firewall filters incoming icmp packet)*
 
 ![demo](https://github.com/ariary/QueenSono/blob/main/img/qssono-trunc.gif?raw=true)
@@ -114,7 +114,7 @@ On target machine:
 </details>
 
 
-### Example 3: Send encrypted data
+### Example 3: Send encrypted data 🔒
 *\> In this example we want to send an encrypted message. As the command line could be spied on we use asymmetric encryption*
 
 On local machine:
