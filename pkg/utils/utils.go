@@ -71,7 +71,6 @@ func BytesToPrivateKey(priv []byte) *rsa.PrivateKey {
 // Base64ToPublicKey base64 encoded to public key
 func Base64ToPublicKey(pub string) *rsa.PublicKey {
 	pubDec, err := b64.RawStdEncoding.DecodeString(pub)
-	fmt.Println(string(pubDec))
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -107,8 +106,34 @@ func EncryptWithPublicKey(msg []byte, pub *rsa.PublicKey) []byte {
 	return ciphertext
 }
 
+// EncryptWithPublicKey encrypts data with public key and encode it with base64
+func Base64EncryptWithPublicKey(msg []byte, pub *rsa.PublicKey) string {
+	mEncrypted := EncryptWithPublicKey(msg, pub)
+	mEncoded := b64.RawStdEncoding.EncodeToString(mEncrypted)
+
+	return mEncoded
+}
+
 // DecryptWithPrivateKey decrypts data with private key
 func DecryptWithPrivateKey(ciphertext []byte, priv *rsa.PrivateKey) []byte {
+	hash := sha512.New()
+	plaintext, err := rsa.DecryptOAEP(hash, rand.Reader, priv, ciphertext, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return plaintext
+}
+
+// DecryptWithPrivateKey decrypts base64 encoded data with private key
+func Base64DecryptWithPrivateKey(ciphertextEnc string, priv *rsa.PrivateKey) []byte {
+	//decode
+	ciphertext, err := b64.RawStdEncoding.DecodeString(ciphertextEnc)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	//decrypt
 	hash := sha512.New()
 	plaintext, err := rsa.DecryptOAEP(hash, rand.Reader, priv, ciphertext, nil)
 	if err != nil {

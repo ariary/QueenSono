@@ -41,7 +41,7 @@ it uses the icmp protocol.`,
 
 			//decrypt if encryption
 			if encryption {
-				message = string(utils.DecryptWithPrivateKey([]byte(message), privKey))
+				message = string(utils.Base64DecryptWithPrivateKey(message, privKey))
 			}
 
 			//Print missing packet

@@ -31,7 +31,8 @@ it uses the icmp protocol.`,
 			var data string
 			if encryption != "" {
 				pubKey := utils.Base64ToPublicKey(encryption)
-				data = string(utils.EncryptWithPublicKey([]byte(args[0]), pubKey)) //send byte instead? (compare byte at both endpoint)
+				enc := utils.Base64EncryptWithPublicKey([]byte(args[0]), pubKey) //same msg, and key but different output? normal behaviour
+				data = enc                                                       //send byte instead? (compare byte at both endpoint)
 			} else {
 				data = args[0]
 			}
