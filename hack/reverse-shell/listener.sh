@@ -1,5 +1,5 @@
 #!/bin/bash
-#Usage: ./listener.sh <ip_target_machine>"
+#Usage: ./listener.sh <ip_listen>"
 LISTEN=$1
 
 while [[ 1 ]]; do

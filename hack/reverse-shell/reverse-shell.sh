@@ -2,7 +2,7 @@
 
 # Usage: ./reverse-shell.sh <ip_remote_lister> <ip_listening>
 # It a "reverse shell" trough ICMP so it is quite ordinary if it takes time or if
-# all command are well treated
+# all commands aren't well treated
 
 REMOTE=$1
 LISTEN=$2
