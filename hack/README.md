@@ -5,7 +5,7 @@ Some fun things using `QueenSono`
 ## Reverse Shell
 <h5 align="center">In <code>QueenSono/hack/reverse-shell</code></h5>
 
-<p align="center"><i> It a "reverse shell" trough ICMP so it is quite ordinary if it takes time or if all commands are not well treated</i></p>
+<p align="center"><i> It a "reverse shell" through ICMP so it is quite ordinary if it takes time or if all commands are not well treated</i></p>
 
 ### Use case
 ***In Post exploitation phase:*** if ICMP is less monitored than other protocol (eg TCP), having a reverse shell trough `QueenSono` is more more stealthy.
