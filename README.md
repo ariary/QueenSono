@@ -140,7 +140,7 @@ RSA encrytion is used to keep data exchanged confidential. It could be useful fo
 
 But it comes with a cost. The choice of asymetric encryption is motivated by the fact that the encryption key is entered on the command line (so it could be retieved easily). Hence, we encrypt data with public key. Like this if someone retrieve the encryption key it will not be possible to decrypt the message. But the public key is smaller than the private one, so it ***encrypt smaller messages***. Also, ***it is computationally expensive***.
 
-Another point, as we want to limit data size/ping request (avoid detection, bug, etc), **use encryption only if needed** ***as the message output-size will (should) always equal the size of the Modulus*** (part of the key) which is big.
+Another point, as we want to limit data size/ping requests (to avoid detection, bug, etc), **use encryption only if needed** ***as the message output-size will (should) always equal the size of the Modulus*** (part of the key) which is big.
 
 ### Notes
 - only work on Linux  (due to the use of golang net icmp package)
