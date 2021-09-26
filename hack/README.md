@@ -3,7 +3,7 @@
 Some fun things using `QueenSono`
 
 ## Bind Shell
-<h5 align="center">In <code>QueenSono/hack/reverse-shell</code></h5>
+<h5 align="center">In <code>QueenSono/hack/bindshell</code></h5>
 
 <p align="center"><i> It a "reverse shell" through ICMP so it is quite ordinary if it takes time or if all commands are not well treated</i></p>
 
