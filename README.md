@@ -146,7 +146,7 @@ Another point, as we want to limit data size/ping requests (to avoid detection, 
 
 ### Bonus
 
-See [hack](https://github.com/ariary/QueenSono/tree/main/hack) section for fun things with `QueenSono` (eg. a reverse shell using ICMP)
+See [hack](https://github.com/ariary/QueenSono/tree/main/hack) section for fun things with `QueenSono` (eg. a bind shell using ICMP)
 
 ### Notes
 - only work on Linux  (due to the use of golang net icmp package)
