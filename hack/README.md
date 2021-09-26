@@ -24,6 +24,6 @@ Some fun things using `QueenSono`
 
 ### Bindshell
 
-Sometimes, and for the ***post exploitation*** phase it is more suited, you need a bind shell. That is to say the `listener` will be on the "compromised" machine and the attacker will "bind" this shell.
+Sometimes, and for the ***post exploitation*** phase it is more suited, you need a bind shell. That is to say the `listener` will be on the "compromised" machine and the attacker machine will "bind" to this shell.
 
 *Product placement: To be stealthly, you `listener` should use a dropper and hide its presence. You could find a stealth dropper example in [curlNExec](https://github.com/ariary/curlNexec) repo. Could I adapt it to use ICMP ? 🤔*
