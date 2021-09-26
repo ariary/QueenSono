@@ -12,6 +12,8 @@
     <a href="https://github.com/ariary/QueenSono#notes">Notes</a>
     ·
     <a href="https://github.com/ariary/QueenSono/issues">Request Feature</a>
+    ·
+    <a href="https://github.com/ariary/QueenSono/tree/main/hack">🎁</a>
   </strong>
 </p>
 
