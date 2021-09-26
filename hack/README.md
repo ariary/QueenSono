@@ -11,7 +11,7 @@ Some fun things using `QueenSono`
 ***In Post exploitation phase:*** if ICMP is less monitored than other protocol (eg TCP), having a reverse shell trough `QueenSono` is more more stealthy.
 
 #### How to do it
-*> On the attacker machine:* Put your listener
+*> On the attacker machine:* Launch your listener
 ```
 ./listener.sh <ip_listening_for_icmp>
 ```
