@@ -1,6 +1,6 @@
 # Hack
 
-Some fun thing with `QueenSono`
+Some fun things using `QueenSono`
 
 ## Reverse Shell
 <h5 align="center">In <code>QueenSono/hack/reverse-shell</code></h5>
