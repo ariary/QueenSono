@@ -142,6 +142,10 @@ But it comes with a cost. The choice of asymetric encryption is motivated by the
 
 Another point, as we want to limit data size/ping requests (to avoid detection, bug, etc), **use encryption only if needed** ***as the message output-size will (should) always equal the size of the Modulus*** (part of the key) which is big.
 
+### Bonus
+
+See [hack](https://github.com/ariary/QueenSono/tree/main/hack) section for fun things with `QueenSono` (eg. a reverse shell using ICMP)
+
 ### Notes
 - only work on Linux  (due to the use of golang net icmp package)
 - need `cap_net_raw capabilities`
