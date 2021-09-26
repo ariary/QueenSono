@@ -115,6 +115,8 @@ On target machine:
 ### Example 3: Send encrypted data 🔒
 *\> In this example we want to send an encrypted message. As the command line could be spied on we use asymmetric encryption (if the key leaks, it isn't an issue so)*
 
+![demo](https://github.com/ariary/QueenSono/blob/main/img/qssono-encrypted.gif)
+
 On local machine:
 
     $ qsreceiver receive -l 0.0.0.0 --encrypt 
