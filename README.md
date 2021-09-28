@@ -151,8 +151,8 @@ Currently, the whole message is encrypted and then chunked to be send (often lea
 
 On the other side we wait for all the packet (chunks), reconstruct our message and then decrypt it. But it works ⇔ we received ALL the chunks, otherwise the decryption will fail.
 
-- We coudl implement a function which will split the message before encryption according to the key length to avoid the size problem 
-- We  could encrypt each chunk, like this we could decrypt them separately
+- [x] We could implement a function which will split the message before encryption according to the key length to avoid the size problem 
+- [ ] We  could encrypt each chunk, like this we could decrypt them separately. (=> Huge message size)
 
 
 ### Bonus
