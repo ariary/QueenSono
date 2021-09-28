@@ -148,7 +148,6 @@ Another point, as we want to limit data size/ping requests (to avoid detection, 
 
 ##### Enhancement
 Currently, the whole message is encrypted and then chunked to be sent. On the other side we wait for all the packet (chunks), reconstruct our message and then decrypt it.
-
 But it works ⇔ we received ALL the chunks, otherwise the decryption will fail.
 
 
