@@ -5,7 +5,7 @@ Some fun things using `QueenSono`
 ## Bind Shell
 <h5 align="center">In <code>QueenSono/hack/bindshell</code></h5>
 
-<p align="center"><i> It a "reverse shell" through ICMP so it is quite ordinary if it takes time or if all commands are not well treated</i></p>
+<p align="center"><i> It is a "bind shell" through ICMP so it is quite ordinary if it takes time or if all commands are not well treated</i></p>
 
 ### Use case
 ***In Post exploitation phase:*** Sometimes, and for the post exploitation phase it is more suited, you need a bind shell. if ICMP is less monitored than other protocol (eg TCP), having a bind shell trough `QueenSono` is more stealthy.
