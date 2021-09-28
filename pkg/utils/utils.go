@@ -106,9 +106,30 @@ func EncryptWithPublicKey(msg []byte, pub *rsa.PublicKey) []byte {
 	return ciphertext
 }
 
+// Split message in multiple chunk before encrypt it to avoid the key size limitation
+func ChunkAndEncrypt(msg []byte, pub *rsa.PublicKey) []byte {
+	hashSize := sha512.Size //Change it if you change hash function in EncryptWithPublicKey
+	msgLen := len(msg)
+	step := pub.Size() - 2*hashSize - 2
+	var encryptedBytes []byte
+
+	for start := 0; start < msgLen; start += step {
+		finish := start + step
+		if finish > msgLen {
+			finish = msgLen
+		}
+
+		encryptedBlockBytes := EncryptWithPublicKey(msg[start:finish], pub)
+
+		encryptedBytes = append(encryptedBytes, encryptedBlockBytes...)
+	}
+
+	return encryptedBytes
+}
+
 // EncryptWithPublicKey encrypts data with public key and encode it with base64
 func Base64EncryptWithPublicKey(msg []byte, pub *rsa.PublicKey) string {
-	mEncrypted := EncryptWithPublicKey(msg, pub)
+	mEncrypted := ChunkAndEncrypt(msg, pub)
 	mEncoded := b64.RawStdEncoding.EncodeToString(mEncrypted)
 
 	return mEncoded
@@ -124,6 +145,26 @@ func DecryptWithPrivateKey(ciphertext []byte, priv *rsa.PrivateKey) []byte {
 	return plaintext
 }
 
+// Decrypt a message which has been encrypted using ChunkAndEncrypt
+func DecryptChunked(ciphertext []byte, priv *rsa.PrivateKey) []byte {
+	msgLen := len(ciphertext)
+	step := priv.PublicKey.Size()
+	var decryptedBytes []byte
+
+	for start := 0; start < msgLen; start += step {
+		finish := start + step
+		if finish > msgLen {
+			finish = msgLen
+		}
+
+		decryptedBlockBytes := DecryptWithPrivateKey(ciphertext[start:finish], priv)
+
+		decryptedBytes = append(decryptedBytes, decryptedBlockBytes...)
+	}
+
+	return decryptedBytes
+}
+
 // DecryptWithPrivateKey decrypts base64 encoded data with private key
 func Base64DecryptWithPrivateKey(ciphertextEnc string, priv *rsa.PrivateKey) []byte {
 	//decode
@@ -134,10 +175,6 @@ func Base64DecryptWithPrivateKey(ciphertextEnc string, priv *rsa.PrivateKey) []b
 	}
 
 	//decrypt
-	hash := sha512.New()
-	plaintext, err := rsa.DecryptOAEP(hash, rand.Reader, priv, ciphertext, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	plaintext := DecryptChunked(ciphertext, priv)
 	return plaintext
 }
