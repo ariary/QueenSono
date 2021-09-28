@@ -131,11 +131,11 @@ On local machine:
 
 On target machine:
 
-    $ qssender send "don't worry this message was encrypted with the public key. only you could decrypt it" -d 1 -l 127.0.0.1 -r 10.0.0.190 go.mod -s 5 --encrypt <public_key_from_qsreceiver_output>
+    $ qssender send "don't worry this message was encrypted with the public key. only you could decrypt it" -d 1 -l 127.0.0.1 -r 10.0.0.190 go.mod -s 5 --key <public_key_from_qsreceiver_output>
 <details>
   <summary>Explanation</summary>
     <li>
-    <code>--encrypt </code> provide key for data encryption. Use the one provided by the <code>qsreceiver</code> command
+    <code>--key </code> provide key for data encryption. Use the one provided by the <code>qsreceiver</code> command
     </li>
 </details>
 
