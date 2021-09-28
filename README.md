@@ -146,6 +146,15 @@ But it comes with a cost. The choice of asymetric encryption is motivated by the
 
 Another point, as we want to limit data size/ping requests (to avoid detection, bug, etc), **use encryption only if needed** ***as the message output-size will (should) always equal the size of the Modulus*** (part of the key) which is big.
 
+##### Enhancement
+Currently, the whole message is encrypted and then chunked to be send (often leading to `crypto/rsa: message too long for RSA public key size`)
+
+On the other side we wait for all the packet (chunks), reconstruct our message and then decrypt it. But it works ⇔ we received ALL the chunks, otherwise the decryption will fail.
+
+- We coudl implement a function which will split the message before encryption according to the key length to avoid the size problem 
+- We  could encrypt each chunk, like this we could decrypt them separately
+
+
 ### Bonus
 
 See [hack](https://github.com/ariary/QueenSono/tree/main/hack) section for fun things with `QueenSono` (eg. a bind shell using ICMP)
