@@ -131,8 +131,8 @@ On local machine:
 
 On target machine:
 ```
-$export MSF="<your message>"
-export KEY="<public_key_from_qsreceiver_output>>"
+$ export MSG="<your message>"
+$ export KEY="<public_key_from_qsreceiver_output>>"
 $ qssender send $MSG -d 1 -l 127.0.0.1 -r 10.0.0.190 -s 5 --key $KEY
 ```
 
