@@ -153,8 +153,8 @@ func SendReply(listeningReplyAddr string, remoteAddr string, chunkSize int, dela
 
 	//Send the data
 	for i := 0; i < len(dataSlice); i++ {
-		SendWhileNoEchoReply(listeningReplyAddr, remoteAddr, dataSlice[i])
 		time.Sleep(time.Duration(delay) * time.Second)
+		SendWhileNoEchoReply(listeningReplyAddr, remoteAddr, dataSlice[i])
 	}
 }
 
@@ -169,8 +169,8 @@ func SendNoReply(listeningReplyAddr string, remoteAddr string, chunkSize int, de
 
 	//Send the data
 	for i := 0; i < len(dataSlice); i++ {
-		IcmpSendRaw(listeningReplyAddr, remoteAddr, dataSlice[i])
 		time.Sleep(time.Duration(delay) * time.Second)
+		IcmpSendRaw(listeningReplyAddr, remoteAddr, dataSlice[i])
 	}
 }
 
