@@ -13,6 +13,7 @@ Some fun things using `QueenSono`
 #### How to do it?
 
 ![demo](https://github.com/ariary/QueenSono/blob/main/img/qssono-bind.gif)
+On both machines you need to have `qssender`and `qsreceiver`
 
 *> On the target machine:* Launch your listener
 ```
