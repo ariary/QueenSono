@@ -26,7 +26,7 @@ const (
 // Send ICMP echo request packet (code 8) to remote and waiting for the echo reply (code 0)
 func IcmpSendRaw(listeningReplyAddr string, remoteAddr string, data string) (*net.IPAddr, error) {
 	// Listen is used to have a PacketConn but we won't wait for reply
-	c, err := icmp.ListenPacket("ip4:icmp", "localhost")
+	c, err := icmp.ListenPacket("ip4:icmp", listeningReplyAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func IcmpSendRaw(listeningReplyAddr string, remoteAddr string, data string) (*ne
 // Send ICMP echo request packet (code 8) to remote and waiting for the echo reply (code 0)
 func IcmpSendAndWaitForReply(listeningReplyAddr string, remoteAddr string, data string) (*net.IPAddr, time.Duration, error) {
 	// Start listening for icmp replies
-	c, err := icmp.ListenPacket("ip4:icmp", "localhost")
+	c, err := icmp.ListenPacket("ip4:icmp", listeningReplyAddr)
 	if err != nil {
 		return nil, 0, err
 	}

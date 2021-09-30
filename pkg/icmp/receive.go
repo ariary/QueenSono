@@ -188,7 +188,7 @@ func getPacketAndBarUpdate(bar *progressbar.ProgressBar, c *icmp.PacketConn, dat
 //Wait ICMP message from remote to assert if the message is well received
 func IntegrityCheck(hash string) {
 	fmt.Println("launch integrity server")
-	c, err := icmp.ListenPacket("ip4:icmp", "localhost")
+	c, err := icmp.ListenPacket("ip4:icmp", "localhost") // CHANGE localhost
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
