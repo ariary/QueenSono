@@ -70,7 +70,7 @@ On local machine:
 On target machine:
 
     $ wget https://raw.githubusercontent.com/mxw/grmr/master/src/finaltests/bible.txt #download a huge file (for the example)
-    $ qssender send file -d 2 -l 127.0.0.1 -r 10.0.0.92 -s 50000 bible.txt
+    $ qssender send file -d 2 -l 0.0.0.0 -r 10.0.0.92 -s 50000 bible.txt
 
 <details>
   <summary><b>Explanation</b></summary>
@@ -80,7 +80,7 @@ On target machine:
     <li>
       <code>-d 2</code> send a packet each 2 seconds
     </li>
-    <li><code>-l 127.0.0.1</code> the listening address for <i>echo reply</i> </li>
+    <li><code>-l 0.0.0.0</code> the listening address for <i>echo reply</i> </li>
     <li><code>-r 10.0.0.92</code> the address of my remote machine with <code>qsreceiver</code> listening</li>
     <li><code>-s 50000</code> the data size I want to send in each packet</li>
 </details>
@@ -105,7 +105,7 @@ On local machine:
 
 On target machine:
 
-    $ qssender send "thisisatest i want to send a string w/o waiting for the echo reply" -d 1 -l 127.0.0.1 -r 10.0.0.190 -s 1 -N
+    $ qssender send "thisisatest i want to send a string w/o waiting for the echo reply" -d 1 -l 0.0.0.0 -r 10.0.0.190 -s 1 -N
 <details>
   <summary><b>Explanation</b></summary>
     <li>
