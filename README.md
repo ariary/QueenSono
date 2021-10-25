@@ -167,3 +167,4 @@ See [hack](https://github.com/ariary/QueenSono/tree/main/hack) section for fun t
 ### Notes
 - only work on Linux  (due to the use of golang net icmp package)
 - need `cap_net_raw` capabilities
+- if you actually send ICMP packets on 2 different machines and you wait for echo reply, be sure to use a reachable IP by remote as a listening address (do not use localhost or equivalent)
