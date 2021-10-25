@@ -166,4 +166,4 @@ See [hack](https://github.com/ariary/QueenSono/tree/main/hack) section for fun t
 
 ### Notes
 - only work on Linux  (due to the use of golang net icmp package)
-- need `cap_net_raw capabilities`
+- need `cap_net_raw` capabilities
