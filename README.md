@@ -162,7 +162,9 @@ But it works ⇔ we have received ALL the chunks, otherwise the decryption will 
 
 ### Bonus
 
-See [hack](https://github.com/ariary/QueenSono/tree/main/hack) section for fun things with `QueenSono` (eg. a bind shell using ICMP)
+See [hack](https://github.com/ariary/QueenSono/tree/main/hack) section for fun things with `QueenSono`:
+* Bind shell using ICMP
+* HTTP over ICMP tunneling
 
 ### Notes
 - only work on Linux  (due to the use of golang net icmp package)
