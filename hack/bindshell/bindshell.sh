@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Usage: ./binshell.sh <ip_remote_lister> <ip_listening>
-# It a "reverse shell" trough ICMP so it is quite ordinary if it takes time or if
+# Usage: ./binshell.sh <ip_remote_listener> <ip_listening>
+# It a "bind shell" trough ICMP so it is quite ordinary if it takes time or if
 # all commands aren't well treated
 
 REMOTE=$1
