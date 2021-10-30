@@ -44,9 +44,9 @@ On both machines you need to have `qssender`and `qsreceiver`
 need cap_net_raw cap         need internet access
 
         ┌───────────┐         ┌───────────────┐           ┌────────────┐
-        │           │         │               │           │            │
+        │           │    1    │               │    2      │            │
         │  qscurl   └─────────►    qsproxy    └───────────►World  wide │
         │           ◄─────────┐               ◄───────────┐    web     │
-        └───────────┘         └───────────────┘           │            │
+        └───────────┘    4    └───────────────┘     3     │            │
                                                           └────────────┘
 ```
