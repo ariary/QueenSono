@@ -41,7 +41,7 @@ On both machines you need to have `qssender`and `qsreceiver`
 
 #### How to do it?
 ```
-need net_packet_raw cap
+need cap_net_raw cap         need internet access
 
         ┌───────────┐         ┌───────────────┐           ┌────────────┐
         │           │         │               │           │            │
@@ -49,6 +49,4 @@ need net_packet_raw cap
         │           ◄─────────┐               ◄───────────┐    web     │
         └───────────┘         └───────────────┘           │            │
                                                           └────────────┘
-
-                             need internet access
 ```
