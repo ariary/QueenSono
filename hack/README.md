@@ -33,7 +33,7 @@ On both machines you need to have `qssender`and `qsreceiver`
 
 <h5 align="center">In <code>QueenSono/hack/tunneling</code></h5>
 
-<p align="center"><i> Access internet but tunneling HTTP request with ICMP</i></p>
+<p align="center"><i> Access internet by tunneling HTTP request with ICMP</i></p>
 
 ### Use case
 * Access internet but firewall rules block http traffic but allow icmp 
