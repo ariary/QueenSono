@@ -27,3 +27,28 @@ On both machines you need to have `qssender`and `qsreceiver`
 
 *Product placement: To be stealthly, you `listener` should use a dropper and hide its presence. You could find a stealth dropper example in [curlNExec](https://github.com/ariary/curlNexec) repo. Should I adapt it to use ICMP ? 🤔*
 
+## HTTP over ICMP tunneling
+
+🚧🚧🚧🚧**WIP**🚧🚧🚧🚧
+
+<h5 align="center">In <code>QueenSono/hack/tunneling</code></h5>
+
+<p align="center"><i> Access internet but tunneling HTTP request with ICMP</i></p>
+
+### Use case
+* Access internet but firewall rules block http traffic but allow icmp 
+* If you want to hide your http tracks 
+
+#### How to do it?
+```
+need net_packet_raw cap
+
+        ┌───────────┐         ┌───────────────┐           ┌────────────┐
+        │           │         │               │           │            │
+        │  qscurl   └─────────►    qsproxy    └───────────►World  wide │
+        │           ◄─────────┐               ◄───────────┐    web     │
+        └───────────┘         └───────────────┘           │            │
+                                                          └────────────┘
+
+                             need internet access
+```
