@@ -6,12 +6,6 @@ Some fun things using `QueenSono`
 * Http over ICMP tunneling
   * For a much more sophisticated ICMP tunneling solution see [icmptunnel](https://github.com/DhavalKapil/icmptunnel)
 
-<sup>
-for stealthiness you could prevent the kernel to reply to any ICMP pings
-
-<pre><code>echo 1 | dd of=/proc/sys/net/ipv4/icmp_echo_ignore_all</code></pre>
-</sup>
-
 ## Bind Shell
 <h5 align="center">In <code>QueenSono/hack/bindshell</code></h5>
 
