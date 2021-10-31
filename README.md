@@ -100,6 +100,11 @@ On local machine:
 <details>
   <summary> <b>Explanation</b></summary>
     <li><code>receive truncated 1</code> does not wait indefinitely if we don't received all the packets. (<code>1</code> is the delay used with <code>qssender</code>)</li>
+
+for stealthiness you could prevent the kernel to reply to any ICMP pings
+
+<pre><code>echo 1 | dd of=/proc/sys/net/ipv4/icmp_echo_ignore_all</code></pre>
+
 </details>
 
 
