@@ -1,10 +1,11 @@
 # Hack
 
+<p align="center"><sup>🧞 "All scripts are there for inspiration and are probably not stable. If you see a good use case and need a more reliable solution, please open an issue"</sup></p>
+
 Some fun things using `QueenSono`
 
-* Bind shell
-* Http over ICMP tunneling
-  * For a much more sophisticated ICMP tunneling solution see [icmptunnel](https://github.com/DhavalKapil/icmptunnel)
+* [Bind Shell](#bind-shell)
+* [HTTP over ICMP tunneling](#http-over-icmp-tunneling)
 
 ## Bind Shell
 <h5 align="center">In <code>QueenSono/hack/bindshell</code></h5>
@@ -33,6 +34,7 @@ On both machines you need to have `qssender`and `qsreceiver`
 
 ## HTTP over ICMP tunneling
 
+For a much more sophisticated ICMP tunneling solution see [icmptunnel](https://github.com/DhavalKapil/icmptunnel)
 
 <h5 align="center">In <code>QueenSono/hack/tunneling</code></h5>
 
