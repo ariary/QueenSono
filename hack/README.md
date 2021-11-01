@@ -43,6 +43,7 @@ For a much more sophisticated ICMP tunneling solution see [icmptunnel](https://g
 ### Use case
 * Access internet but firewall rules block http traffic but allow icmp 
 * If you want to hide your http tracks 
+* Access internal webapp (in this case, put the `qsproxy` in the target machine and `qscurl` in the attacker machine)
 
 #### How to do it?
 ```
