@@ -25,6 +25,7 @@
 Clone the repo and download the dependencies locally:
 ```    
 git clone https://github.com/ariary/QueenSono.git
+cd QueenSono
 make before.build
 ```
 
