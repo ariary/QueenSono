@@ -20,7 +20,36 @@
 </p>
 
 ## Install
- *\> Install the binary from source*
+
+### With `curl`
+
+*> From release*
+
+```shell
+curl -lO -L https://github.com/ariary/QueenSono/releases/latest/download/qsreceiver
+curl -lO -L https://github.com/ariary/QueenSono/releases/latest/download/qssender
+```
+
+### With `go`
+
+*> Via `go install`*
+
+Make sure `$GOPATH` is in your `$PATH` before
+
+Install `qssender`
+
+```shell
+go install github.com/ariary/QueenSono/cmd/client@latest
+mv $GOPATH/bin/client $GOPATH/bin/qssender #rename binary
+```
+
+Install `qsreceiver`
+
+```shell
+go install github.com/ariary/QueenSono/cmd/server@latest
+mv $GOPATH/bin/server $GOPATH/bin/qsreceiver #rename binary
+```
+*\> Install the binary from source*
  
 Clone the repo and download the dependencies locally:
 ```    
@@ -37,7 +66,6 @@ make before.build
  To build the ICMP packet receiver `qsreceiver` :
 
      build.queensono-receiver
-
 ## Usage
 
 `qssender` is the binary which will send ICMP packet  to the listener , so it is the binary you have to transfer on your target machine. 
