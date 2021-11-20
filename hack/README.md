@@ -84,7 +84,7 @@ need cap_net_raw cap         need internet access
 
 Launch your listener on receiver machine:
 ```
-qsreceiver receive -l 0.0.0.0 -f [binary_filename]
+qsreceiver receive -l 0.0.0.0 -f [binary64] && cat [binary64] | base 64 -d > [binary] && chmod +x [binary]
 ```
 
 On sender machine, encode binary file, send it, remove temporary file:
