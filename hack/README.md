@@ -82,7 +82,7 @@ need cap_net_raw cap         need internet access
 
 *It is also applicable for all non-human readable files.*
 
-See [this](https://github.com/ariary/fileless-xec/blob/main/usage.md#bypass-network-restriction-with-icmp) to receive & execute it in 1 step on remote
+See [this](https://github.com/ariary/fileless-xec/blob/main/usage.md#bypass-network-restriction-with-icmp) to receive & execute binary in 1 step on remote
 
 Launch your listener on receiver machine:
 ```
