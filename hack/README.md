@@ -82,6 +82,8 @@ need cap_net_raw cap         need internet access
 
 *It is also applicable for all non-human readable files.*
 
+See [this](https://github.com/ariary/fileless-xec/blob/main/usage.md#bypass-network-restriction-with-icmp) to receive & execute it in 1 step on remote
+
 Launch your listener on receiver machine:
 ```
 qsreceiver receive -l 0.0.0.0 -f [binary64] && cat [binary64] | base 64 -d > [binary] && chmod +x [binary]
@@ -93,6 +95,8 @@ cat [binary] | base64 > tmpBinary64
 qssender send file -d 1 -l 0.0.0.0 -r [receiver_ip] -s 50000 tmpBinary64 # It is recommanded to use -s 50000 but you could put another value
 rm tmpBinary64
 ```
+
+
 
         
         
