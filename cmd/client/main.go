@@ -51,7 +51,7 @@ it uses the icmp protocol.`,
 
 	cmdSend.PersistentFlags().StringVarP(&listenAddr, "listen", "l", "0.0.0.0", "address used for listening echo reply")
 
-	cmdSend.PersistentFlags().IntVarP(&chunkSize, "size", "s", 65507, "Size of each ICMP data section send by packet")
+	cmdSend.PersistentFlags().IntVarP(&chunkSize, "size", "s", 65488, "Size of each ICMP data section send by packet")
 
 	cmdSend.PersistentFlags().IntVarP(&delay, "delay", "d", 4, "delay between each packet sent")
 

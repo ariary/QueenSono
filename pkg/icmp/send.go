@@ -80,7 +80,7 @@ func IcmpSendAndWaitForReply(listeningReplyAddr string, remoteAddr string, data 
 	}
 
 	// Wait for a reply
-	reply := make([]byte, 65507)
+	reply := make([]byte, 65535)
 	err = c.SetReadDeadline(time.Now().Add(10 * time.Second))
 	if err != nil {
 		return dst, 0, err

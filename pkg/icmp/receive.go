@@ -22,7 +22,7 @@ func GetMessageSizeAndSender(listenAddr string) (size int, sender string) {
 	}
 	defer c.Close()
 
-	packet := make([]byte, 65507)
+	packet := make([]byte, 65535)
 	n, peer, err := c.ReadFrom(packet)
 	if err != nil {
 		fmt.Println("Error while reading icmp packet:", err)
@@ -136,7 +136,7 @@ func ServeTemporary(listenAddr string, n int, progressBar bool, delay int) (data
 
 //Get a single packet then add the data to the slice (= chunked data) and remove the index from the indexes
 func getPacket(c *icmp.PacketConn, data []string, indexes map[int]int) {
-	packet := make([]byte, 65507)
+	packet := make([]byte, 65535)
 	n, peer, err := c.ReadFrom(packet)
 	if err != nil {
 		fmt.Println("Error while reading icmp packet:", err)
@@ -161,7 +161,7 @@ func getPacket(c *icmp.PacketConn, data []string, indexes map[int]int) {
 
 //Get a single packet then add the data to the slice (= chunked data), remove the index from the indexes & update the crossbar
 func getPacketAndBarUpdate(bar *progressbar.ProgressBar, c *icmp.PacketConn, data []string, indexes map[int]int) {
-	packet := make([]byte, 65507)
+	packet := make([]byte, 65535)
 	n, peer, err := c.ReadFrom(packet)
 	if err != nil {
 		fmt.Println("Error while reading icmp packet:", err)
@@ -195,7 +195,7 @@ func IntegrityCheck(hash string) {
 	defer c.Close()
 
 	for {
-		packet := make([]byte, 65507)
+		packet := make([]byte, 65535)
 		n, peer, err := c.ReadFrom(packet)
 		if err != nil {
 			fmt.Println("Error while reading icmp packet:", err)
