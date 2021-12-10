@@ -1,6 +1,7 @@
 <h1 align="center">QueenSono <i> ICMP Data Exfiltration </i></h1>
 
-<p align="center"><a href="https://github.com/enaqx/awesome-pentest"><img src="https://awesome.re/mentioned-badge.svg"></a></p>
+<p align="center"><img src=https://github.com/ariary/QueenSono/blob/main/img/qs-small.png>
+<br><br><a href="https://github.com/enaqx/awesome-pentest"><img src="https://awesome.re/mentioned-badge.svg"></a></p>
 <h4 align="center">A Golang Package for Data Exfiltration with ICMP protocol.</h4>
 
 <p align="center">
