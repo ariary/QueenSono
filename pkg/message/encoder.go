@@ -2,29 +2,29 @@ package message
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 )
 
-//Function used to transfor a data chunked in the QueenSono format (ie each chunk has its index added behind)
-func QueenSonoMarshall(dataSlice []string) (nDataSlice []string) {
-	nDataSlice = make([]string, len(dataSlice))
-	for i := 0; i < len(dataSlice); i++ {
-		nDataSlice[i] = strconv.Itoa(i) + "," + dataSlice[i]
+// QueenSonoMarshall prepends each chunk with its index: "i,data".
+func QueenSonoMarshall(dataSlice []string) []string {
+	nDataSlice := make([]string, len(dataSlice))
+	for i, s := range dataSlice {
+		nDataSlice[i] = strconv.Itoa(i) + "," + s
 	}
 	return nDataSlice
 }
 
-//Unmarshall a QueenSono message (ie parsing it to get the index of the packet and the content)
-func QueenSonoUnmarshall(msg string) (nMsg string, index int) {
-	qsMsg := strings.SplitN(msg, ",", 2)
-	index, err := strconv.Atoi(qsMsg[0])
-
-	if err != nil {
-		fmt.Println(err)
-		fmt.Fprintf(os.Stderr, "QueenSonoUnmarshall: failed to convert %s into int", qsMsg[0])
+// QueenSonoUnmarshall parses a "index,data" message.
+// Returns an error if the message has no comma or an invalid index.
+func QueenSonoUnmarshall(msg string) (nMsg string, index int, err error) {
+	parts := strings.SplitN(msg, ",", 2)
+	if len(parts) != 2 {
+		return "", 0, fmt.Errorf("QueenSonoUnmarshall: missing comma in %q", msg)
 	}
-	nMsg = qsMsg[1]
-	return nMsg, index
+	index, err = strconv.Atoi(parts[0])
+	if err != nil {
+		return "", 0, fmt.Errorf("QueenSonoUnmarshall: invalid index %q: %w", parts[0], err)
+	}
+	return parts[1], index, nil
 }
