@@ -14,216 +14,221 @@ import (
 	"golang.org/x/net/ipv4"
 )
 
-//Wait for the fistr ICMP packet setting sized of data
-func GetMessageSizeAndSender(listenAddr string) (size int, sender string) {
+// GetMessageSizeAndSender waits for the first ICMP packet announcing the chunk count.
+func GetMessageSizeAndSender(listenAddr string) (size int, sender string, err error) {
 	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
 	if err != nil {
-		fmt.Println("Error:", err)
+		return 0, "", fmt.Errorf("listen: %w", err)
 	}
 	defer c.Close()
 
 	packet := make([]byte, 65535)
 	n, peer, err := c.ReadFrom(packet)
 	if err != nil {
-		fmt.Println("Error while reading icmp packet:", err)
+		return 0, "", fmt.Errorf("read packet: %w", err)
 	}
 
-	message, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
+	msg, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
 	if err != nil {
-		fmt.Println("Error while parsing icmp message:", err)
+		return 0, "", fmt.Errorf("parse packet: %w", err)
 	}
 
-	switch message.Type {
+	switch msg.Type {
 	case ipv4.ICMPTypeEcho:
-		echo, _ := message.Body.Marshal(1)
-		m := string(echo[4:]) //clean
-		size, err = strconv.Atoi(m)
+		echo, ok := msg.Body.(*icmp.Echo)
+		if !ok {
+			return 0, "", fmt.Errorf("unexpected ICMP body type")
+		}
+		size, err = strconv.Atoi(string(echo.Data))
 		if err != nil {
-			fmt.Println(err)
+			return 0, "", fmt.Errorf("parse size %q: %w", string(echo.Data), err)
 		}
 	default:
-		fmt.Errorf("got %+v from %v; want echo request", message, peer)
+		return 0, "", fmt.Errorf("got %+v from %v; want echo request", msg, peer)
 	}
-	sender = peer.String()
-	return size, sender
+	return size, peer.String(), nil
 }
 
-//ICMP server waiting for packet (waiting n packet)
-func Serve(listenAddr string, n int, progressBar bool) (data string, missingPacketIndexes []int) {
+// Serve receives exactly n ICMP data packets and reassembles them in order.
+func Serve(listenAddr string, n int, progressBar bool) (data string, missingPacketIndexes []int, err error) {
 	var bar *progressbar.ProgressBar
 	if progressBar {
 		bar = progressbar.Default(int64(n))
 	}
 	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
 	if err != nil {
-		fmt.Println("Error:", err)
+		return "", nil, fmt.Errorf("listen: %w", err)
 	}
 	defer c.Close()
 
 	dataChunked := make([]string, n)
-	//prepare map of indexes (map cause it  complexity to delete an element is 0(1), slice 0(n))
 	indexes := make(map[int]int)
-	for i := 0; i < n; i++ {
-		indexes[i] = 0 //the value does not have any interest
-	}
-	//Retrieve the n packet (waiting till we have all packets)
-	var wg sync.WaitGroup
-	wg.Add(n)
-	for i := 0; i < n; i++ {
-		go func(c *icmp.PacketConn, dataChunked []string, i int, indexes map[int]int, bar *progressbar.ProgressBar) {
-			defer wg.Done()
-			if progressBar {
-				getPacketAndBarUpdate(bar, c, dataChunked, indexes)
-			} else {
-				getPacket(c, dataChunked, indexes)
-			}
-		}(c, dataChunked, i, indexes, bar)
+	for i := range n {
+		indexes[i] = 0
 	}
 
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	wg.Add(n)
+	for range n {
+		go func() {
+			defer wg.Done()
+			if progressBar {
+				getPacketAndBarUpdate(bar, c, dataChunked, indexes, &mu)
+			} else {
+				getPacket(c, dataChunked, indexes, &mu)
+			}
+		}()
+	}
 	wg.Wait()
 
 	data = strings.Join(dataChunked, "")
-
 	missingPacketIndexes = make([]int, 0, len(indexes))
 	for index := range indexes {
 		missingPacketIndexes = append(missingPacketIndexes, index)
 	}
-	return data, missingPacketIndexes
+	return data, missingPacketIndexes, nil
 }
 
-//ICMP server waiting for specific number of packet (waiting n packet) but that stop working after (n+2)*delay seconds
-// return a string with the data section of each packet concatened and the index of the packet missing
-func ServeTemporary(listenAddr string, n int, progressBar bool, delay int) (data string, missingPacketIndexes []int) {
-	//crossBar
+// ServeTemporary receives up to n ICMP data packets, stopping after (n+2)*delay seconds.
+func ServeTemporary(listenAddr string, n int, progressBar bool, delay int) (data string, missingPacketIndexes []int, err error) {
 	var bar *progressbar.ProgressBar
 	if progressBar {
 		bar = progressbar.Default(int64(n))
 	}
 
-	//ICMP Serverlistening
 	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
 	if err != nil {
-		fmt.Println("Error:", err)
+		return "", nil, fmt.Errorf("listen: %w", err)
 	}
 	defer c.Close()
 
 	dataChunked := make([]string, n)
-	indexes := make(map[int]int) //prepare map of indexes (map cause it  complexity to delete an element is 0(1), slice 0(n))
-	for i := 0; i < n; i++ {
-		indexes[i] = 0 //the value does not have any interest
+	indexes := make(map[int]int)
+	for i := range n {
+		indexes[i] = 0
 	}
 
-	//Retrieve the packet
-	for i := 0; i < n; i++ {
-		if progressBar {
-			go getPacketAndBarUpdate(bar, c, dataChunked, indexes)
-		} else {
-			go getPacket(c, dataChunked, indexes)
-		}
+	var mu sync.Mutex
+	for range n {
+		go func() {
+			if progressBar {
+				getPacketAndBarUpdate(bar, c, dataChunked, indexes, &mu)
+			} else {
+				getPacket(c, dataChunked, indexes, &mu)
+			}
+		}()
 	}
 
-	//Counter for not waiting indefinitively
-	counter := (n + 2) * delay //let a little offset
-	time.Sleep(time.Duration(counter) * time.Second)
+	time.Sleep(time.Duration((n+2)*delay) * time.Second)
 	data = strings.Join(dataChunked, "")
-
 	missingPacketIndexes = make([]int, 0, len(indexes))
 	for index := range indexes {
 		missingPacketIndexes = append(missingPacketIndexes, index)
 	}
-	return data, missingPacketIndexes
+	return data, missingPacketIndexes, nil
 }
 
-//Get a single packet then add the data to the slice (= chunked data) and remove the index from the indexes
-func getPacket(c *icmp.PacketConn, data []string, indexes map[int]int) {
+func getPacket(c *icmp.PacketConn, data []string, indexes map[int]int, mu *sync.Mutex) {
 	packet := make([]byte, 65535)
-	n, peer, err := c.ReadFrom(packet)
+	n, _, err := c.ReadFrom(packet)
 	if err != nil {
-		fmt.Println("Error while reading icmp packet:", err)
+		fmt.Fprintf(os.Stderr, "read packet: %v\n", err)
+		return
 	}
-
-	message, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
+	msg, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
 	if err != nil {
-		fmt.Println("Error while parsing icmp message:", err)
+		fmt.Fprintf(os.Stderr, "parse packet: %v\n", err)
+		return
 	}
-
-	switch message.Type {
+	switch msg.Type {
 	case ipv4.ICMPTypeEcho:
-		echo, _ := message.Body.Marshal(1)
-		//m := string(echo[2:]) //clean
-		msg, index, err := qsmessage.QueenSonoUnmarshall(string(echo[4:])) //echo has 4 bytes which are added, don't know why
-		if err != nil {
-			fmt.Println("Error unmarshalling:", err)
+		echo, ok := msg.Body.(*icmp.Echo)
+		if !ok {
+			fmt.Fprintf(os.Stderr, "unexpected ICMP body type\n")
+			return
 		}
-		data[index] = msg
+		content, index, err := qsmessage.QueenSonoUnmarshall(string(echo.Data))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "unmarshal: %v\n", err)
+			return
+		}
+		mu.Lock()
+		data[index] = content
 		delete(indexes, index)
+		mu.Unlock()
 	default:
-		fmt.Errorf("got %+v from %v; want echo request", message, peer)
+		fmt.Fprintf(os.Stderr, "got %+v; want echo request\n", msg)
 	}
 }
 
-//Get a single packet then add the data to the slice (= chunked data), remove the index from the indexes & update the crossbar
-func getPacketAndBarUpdate(bar *progressbar.ProgressBar, c *icmp.PacketConn, data []string, indexes map[int]int) {
+func getPacketAndBarUpdate(bar *progressbar.ProgressBar, c *icmp.PacketConn, data []string, indexes map[int]int, mu *sync.Mutex) {
 	packet := make([]byte, 65535)
-	n, peer, err := c.ReadFrom(packet)
+	n, _, err := c.ReadFrom(packet)
 	if err != nil {
-		fmt.Println("Error while reading icmp packet:", err)
+		fmt.Fprintf(os.Stderr, "read packet: %v\n", err)
+		return
 	}
-
-	message, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
+	msg, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
 	if err != nil {
-		fmt.Println("Error while parsing icmp message:", err)
+		fmt.Fprintf(os.Stderr, "parse packet: %v\n", err)
+		return
 	}
-
-	switch message.Type {
+	switch msg.Type {
 	case ipv4.ICMPTypeEcho:
-		echo, _ := message.Body.Marshal(1)
-		//m := string(echo[2:]) //clean
-		msg, index, err := qsmessage.QueenSonoUnmarshall(string(echo[4:])) //echo has 4 bytes which are added, don't know why
-		if err != nil {
-			fmt.Println("Error unmarshalling:", err)
+		echo, ok := msg.Body.(*icmp.Echo)
+		if !ok {
+			fmt.Fprintf(os.Stderr, "unexpected ICMP body type\n")
+			return
 		}
-		data[index] = msg
+		content, index, err := qsmessage.QueenSonoUnmarshall(string(echo.Data))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "unmarshal: %v\n", err)
+			return
+		}
+		mu.Lock()
+		data[index] = content
 		delete(indexes, index)
+		mu.Unlock()
 		bar.Add(1)
 	default:
-		fmt.Errorf("got %+v from %v; want echo request", message, peer)
+		fmt.Fprintf(os.Stderr, "got %+v; want echo request\n", msg)
 	}
 }
 
-//Wait ICMP message from remote to assert if the message is well received
-func IntegrityCheck(hash string) {
-	fmt.Println("launch integrity server")
-	c, err := icmp.ListenPacket("ip4:icmp", "localhost") // CHANGE localhost
+// IntegrityCheck listens on listenAddr for a hash and exits when it matches.
+func IntegrityCheck(listenAddr, hash string) {
+	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Fprintln(os.Stderr, "Error:", err)
+		return
 	}
 	defer c.Close()
 
 	for {
 		packet := make([]byte, 65535)
-		n, peer, err := c.ReadFrom(packet)
+		n, _, err := c.ReadFrom(packet)
 		if err != nil {
-			fmt.Println("Error while reading icmp packet:", err)
+			fmt.Fprintf(os.Stderr, "read: %v\n", err)
+			continue
 		}
-
-		message, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
+		msg, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
 		if err != nil {
-			fmt.Println("Error while parsing icmp message:", err)
+			fmt.Fprintf(os.Stderr, "parse: %v\n", err)
+			continue
 		}
-
-		switch message.Type {
+		switch msg.Type {
 		case ipv4.ICMPTypeEcho:
-			fmt.Println("Get integrity")
-			echo, _ := message.Body.Marshal(1)
-			fmt.Println("hash received:", string(echo[4:])) //clean
-			if string(echo[4:]) == hash {
+			echo, ok := msg.Body.(*icmp.Echo)
+			if !ok {
+				continue
+			}
+			if string(echo.Data) == hash {
 				fmt.Println("Communication end")
 				os.Exit(0)
 			}
 		default:
-			//fmt.Println("DEFAULT!!!!!!!!!!")
-			fmt.Errorf("got %+v from %v; want echo request", message, peer)
+			fmt.Fprintf(os.Stderr, "got %+v; want echo request\n", msg)
 		}
 	}
 }

@@ -35,9 +35,15 @@ it uses the icmp protocol.`,
 				fmt.Println("Public Key (copy and paste it in qsreceiver):")
 				fmt.Println(pubKeyEnc)
 			}
-			size, sender := icmp.GetMessageSizeAndSender(listenAddr)
+			size, sender, err := icmp.GetMessageSizeAndSender(listenAddr)
+			if err != nil {
+				log.Fatal(err)
+			}
 			fmt.Println("Sender:", sender, ", Number of packet wanted:", size)
-			message, missingPacketsIndexes := icmp.Serve(listenAddr, size, progressBar)
+			message, missingPacketsIndexes, err := icmp.Serve(listenAddr, size, progressBar)
+			if err != nil {
+				log.Fatal(err)
+			}
 
 			//decrypt if encryption
 			if encryption {
@@ -90,13 +96,19 @@ it uses the icmp protocol.`,
 				fmt.Println("Public Key (copy and paste it in qsreceiver):")
 				fmt.Println(pubKeyEnc)
 			}
-			size, sender := icmp.GetMessageSizeAndSender(listenAddr)
+			size, sender, err := icmp.GetMessageSizeAndSender(listenAddr)
+			if err != nil {
+				log.Fatal(err)
+			}
 			fmt.Println("Sender:", sender, ", Number of packet wanted:", size)
 			delay, err := strconv.Atoi(args[0])
 			if err != nil {
 				panic(err)
 			}
-			message, missingPacketsIndexes := icmp.ServeTemporary(listenAddr, size, progressBar, delay)
+			message, missingPacketsIndexes, err := icmp.ServeTemporary(listenAddr, size, progressBar, delay)
+			if err != nil {
+				log.Fatal(err)
+			}
 			//icmp.SendHashedmessage(message, sender) //Integrity check
 			//Print missing packet
 			if len(missingPacketsIndexes) > 0 {
