@@ -13,8 +13,6 @@ import (
 )
 
 func main() {
-	//CMD RECEIVE
-	//receive var
 	var listenAddr string
 	var filename string
 	var progressBar bool
@@ -23,17 +21,16 @@ func main() {
 	var cmdReceive = &cobra.Command{
 		Use:   "receive",
 		Short: "receive data from icmp packet",
-		Long: `receive is for receiving  data from a remote queensono sender.
+		Long: `receive is for receiving data from a remote queensono sender.
 it uses the icmp protocol.`,
 		Args: cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			var privKey *rsa.PrivateKey
-			var pubKey *rsa.PublicKey
 			if encryption {
+				var pubKey *rsa.PublicKey
 				privKey, pubKey = utils.GenerateKeyPair(4096)
-				pubKeyEnc := utils.PublicKeyToBase64(pubKey)
-				fmt.Println("Public Key (copy and paste it in qsreceiver):")
-				fmt.Println(pubKeyEnc)
+				fmt.Println("Public Key (copy and paste it in qssender):")
+				fmt.Println(utils.PublicKeyToBase64(pubKey))
 			}
 			size, sender, err := icmp.GetMessageSizeAndSender(listenAddr)
 			if err != nil {
@@ -44,30 +41,19 @@ it uses the icmp protocol.`,
 			if err != nil {
 				log.Fatal(err)
 			}
-
-			//decrypt if encryption
 			if encryption {
 				message = string(utils.Base64DecryptWithPrivateKey(message, privKey))
 			}
-
-			//Print missing packet
 			if len(missingPacketsIndexes) > 0 {
 				fmt.Println("Missing packet:")
-				for i := 0; i < len(missingPacketsIndexes); i++ {
+				for i := range len(missingPacketsIndexes) {
 					fmt.Print(missingPacketsIndexes[i], " ")
 				}
 				fmt.Println()
 			}
 			if filename != "" {
-				f, err := os.Create(filename)
-				if err != nil {
+				if err := os.WriteFile(filename, []byte(message), 0644); err != nil {
 					log.Fatal(err)
-				}
-				defer f.Close()
-
-				_, err2 := f.WriteString(message)
-				if err2 != nil {
-					log.Fatal(err2)
 				}
 				fmt.Println("data saved in", filename)
 			} else {
@@ -76,26 +62,17 @@ it uses the icmp protocol.`,
 		},
 	}
 
-	//cmdReceive flag handling
 	cmdReceive.PersistentFlags().StringVarP(&listenAddr, "listen", "l", "0.0.0.0", "address used for listening icmp packet")
 	cmdReceive.PersistentFlags().StringVarP(&filename, "filename", "f", "", "filename where stored the data received")
 	cmdReceive.PersistentFlags().BoolVarP(&progressBar, "progress-bar", "p", false, "print progression of the data reception")
 	cmdReceive.PersistentFlags().BoolVarP(&encryption, "encrypt", "e", false, "use encryption for data exchange")
 
-	//CMD TRUNCATED
 	var cmdTruncated = &cobra.Command{
 		Use:   "truncated [delay]",
-		Short: "receive data from icmp packet and do not wait indefinitively for all the packet.(indicate the packet missing at the end)",
-		Long:  `receive data from icmp packet and do not wait indefinitively for all the packet. Hence you could receive truncated data. If the data isn't fully retrieved  it return the index of the missing packet`,
+		Short: "receive data without waiting indefinitely for all packets",
+		Long:  `Receive data from icmp packets and stop after (n+2)*delay seconds. Reports missing packet indexes.`,
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			if encryption {
-				//privKey, pubKey := utils.GenerateKeyPair(1024)
-				_, pubKey := utils.GenerateKeyPair(1024)
-				pubKeyEnc := utils.PublicKeyToBase64(pubKey)
-				fmt.Println("Public Key (copy and paste it in qsreceiver):")
-				fmt.Println(pubKeyEnc)
-			}
 			size, sender, err := icmp.GetMessageSizeAndSender(listenAddr)
 			if err != nil {
 				log.Fatal(err)
@@ -103,32 +80,22 @@ it uses the icmp protocol.`,
 			fmt.Println("Sender:", sender, ", Number of packet wanted:", size)
 			delay, err := strconv.Atoi(args[0])
 			if err != nil {
-				panic(err)
+				log.Fatalf("invalid delay %q: %v", args[0], err)
 			}
 			message, missingPacketsIndexes, err := icmp.ServeTemporary(listenAddr, size, progressBar, delay)
 			if err != nil {
 				log.Fatal(err)
 			}
-			//icmp.SendHashedmessage(message, sender) //Integrity check
-			//Print missing packet
 			if len(missingPacketsIndexes) > 0 {
 				fmt.Println("Missing packet:")
-				for i := 0; i < len(missingPacketsIndexes); i++ {
+				for i := range len(missingPacketsIndexes) {
 					fmt.Print(missingPacketsIndexes[i], " ")
 				}
 				fmt.Println()
 			}
-
 			if filename != "" {
-				f, err := os.Create(filename)
-				if err != nil {
+				if err := os.WriteFile(filename, []byte(message), 0644); err != nil {
 					log.Fatal(err)
-				}
-				defer f.Close()
-
-				_, err2 := f.WriteString(message)
-				if err2 != nil {
-					log.Fatal(err2)
 				}
 				fmt.Println("data saved in", filename)
 			} else {
@@ -137,8 +104,29 @@ it uses the icmp protocol.`,
 		},
 	}
 
+	var replySendListenAddr string
+	var replySendChunkSize int
+	var replySendDelay int
+
+	var cmdReplySend = &cobra.Command{
+		Use:   "reply-send [data to send]",
+		Short: "Send data to a remote qssender via ICMP echo replies",
+		Long: `reply-send waits for a QS_READY trigger from qssender, then sends data
+back as chunked ICMP echo replies.`,
+		Args: cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := icmp.ServeWithEchoReply(replySendListenAddr, args[0], replySendChunkSize, replySendDelay); err != nil {
+				log.Fatal(err)
+			}
+		},
+	}
+	cmdReplySend.PersistentFlags().StringVarP(&replySendListenAddr, "listen", "l", "0.0.0.0", "address to listen on for trigger")
+	cmdReplySend.PersistentFlags().IntVarP(&replySendChunkSize, "size", "s", 65488, "size of each ICMP data chunk")
+	cmdReplySend.PersistentFlags().IntVarP(&replySendDelay, "delay", "d", 4, "delay between reply packets in seconds")
+
 	var rootCmd = &cobra.Command{Use: "qsreceiver"}
 	rootCmd.AddCommand(cmdReceive)
 	cmdReceive.AddCommand(cmdTruncated)
+	rootCmd.AddCommand(cmdReplySend)
 	rootCmd.Execute()
 }
