@@ -151,7 +151,10 @@ func getPacket(c *icmp.PacketConn, data []string, indexes map[int]int) {
 	case ipv4.ICMPTypeEcho:
 		echo, _ := message.Body.Marshal(1)
 		//m := string(echo[2:]) //clean
-		msg, index := qsmessage.QueenSonoUnmarshall(string(echo[4:])) //echo has 4 bytes which are added, don't know why
+		msg, index, err := qsmessage.QueenSonoUnmarshall(string(echo[4:])) //echo has 4 bytes which are added, don't know why
+		if err != nil {
+			fmt.Println("Error unmarshalling:", err)
+		}
 		data[index] = msg
 		delete(indexes, index)
 	default:
@@ -176,7 +179,10 @@ func getPacketAndBarUpdate(bar *progressbar.ProgressBar, c *icmp.PacketConn, dat
 	case ipv4.ICMPTypeEcho:
 		echo, _ := message.Body.Marshal(1)
 		//m := string(echo[2:]) //clean
-		msg, index := qsmessage.QueenSonoUnmarshall(string(echo[4:])) //echo has 4 bytes which are added, don't know why
+		msg, index, err := qsmessage.QueenSonoUnmarshall(string(echo[4:])) //echo has 4 bytes which are added, don't know why
+		if err != nil {
+			fmt.Println("Error unmarshalling:", err)
+		}
 		data[index] = msg
 		delete(indexes, index)
 		bar.Add(1)
