@@ -107,11 +107,7 @@ func ChunkAndEncrypt(msg []byte, pub *rsa.PublicKey) []byte {
 	step := pub.Size() - 2*hashSize - 2
 	var encryptedBytes []byte
 	for start := 0; start < msgLen; start += step {
-		finish := start + step
-		if finish > msgLen {
-			finish = msgLen
-		}
-		encryptedBytes = append(encryptedBytes, EncryptWithPublicKey(msg[start:finish], pub)...)
+		encryptedBytes = append(encryptedBytes, EncryptWithPublicKey(msg[start:min(start+step, msgLen)], pub)...)
 	}
 	return encryptedBytes
 }
@@ -137,11 +133,7 @@ func DecryptChunked(ciphertext []byte, priv *rsa.PrivateKey) []byte {
 	step := priv.PublicKey.Size()
 	var decryptedBytes []byte
 	for start := 0; start < msgLen; start += step {
-		finish := start + step
-		if finish > msgLen {
-			finish = msgLen
-		}
-		decryptedBytes = append(decryptedBytes, DecryptWithPrivateKey(ciphertext[start:finish], priv)...)
+		decryptedBytes = append(decryptedBytes, DecryptWithPrivateKey(ciphertext[start:min(start+step, msgLen)], priv)...)
 	}
 	return decryptedBytes
 }
