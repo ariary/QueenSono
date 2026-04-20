@@ -1,6 +1,6 @@
 module github.com/ariary/QueenSono
 
-go 1.16
+go 1.22
 
 require (
 	github.com/schollz/progressbar/v3 v3.8.2
