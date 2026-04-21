@@ -5,14 +5,14 @@ import (
 	"crypto/rsa"
 	"crypto/sha512"
 	"crypto/x509"
-	b64 "encoding/base64"
+	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 	"log"
 	"os"
 )
 
-// GenerateKeyPair generates a new key pair
+// GenerateKeyPair generates a new RSA key pair.
 func GenerateKeyPair(bits int) (*rsa.PrivateKey, *rsa.PublicKey) {
 	privkey, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
@@ -21,42 +21,36 @@ func GenerateKeyPair(bits int) (*rsa.PrivateKey, *rsa.PublicKey) {
 	return privkey, &privkey.PublicKey
 }
 
-// PrivateKeyToBytes private key to bytes
+// PrivateKeyToBytes encodes a private key as PEM bytes.
 func PrivateKeyToBytes(priv *rsa.PrivateKey) []byte {
-	privBytes := pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "RSA PRIVATE KEY",
-			Bytes: x509.MarshalPKCS1PrivateKey(priv),
-		},
-	)
-
-	return privBytes
+	return pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(priv),
+	})
 }
 
-// PublicKeyToBytes public key to base64 encoding
+// PublicKeyToBase64 encodes a public key as base64-encoded PEM.
 func PublicKeyToBase64(pub *rsa.PublicKey) string {
 	pubASN1, err := x509.MarshalPKIXPublicKey(pub)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	pubBytes := pem.EncodeToMemory(&pem.Block{
 		Type:  "RSA PUBLIC KEY",
 		Bytes: pubASN1,
 	})
-	pubEnc := b64.RawStdEncoding.EncodeToString(pubBytes)
-	return pubEnc
+	return base64.RawStdEncoding.EncodeToString(pubBytes)
 }
 
-// BytesToPrivateKey bytes to private key
+// BytesToPrivateKey decodes PEM bytes into a private key.
 func BytesToPrivateKey(priv []byte) *rsa.PrivateKey {
 	block, _ := pem.Decode(priv)
-	enc := x509.IsEncryptedPEMBlock(block)
+	enc := x509.IsEncryptedPEMBlock(block) //nolint:staticcheck
 	b := block.Bytes
 	var err error
 	if enc {
 		log.Println("is encrypted pem block")
-		b, err = x509.DecryptPEMBlock(block, nil)
+		b, err = x509.DecryptPEMBlock(block, nil) //nolint:staticcheck
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -68,19 +62,19 @@ func BytesToPrivateKey(priv []byte) *rsa.PrivateKey {
 	return key
 }
 
-// Base64ToPublicKey base64 encoded to public key
+// Base64ToPublicKey decodes a base64-encoded PEM public key.
 func Base64ToPublicKey(pub string) *rsa.PublicKey {
-	pubDec, err := b64.RawStdEncoding.DecodeString(pub)
+	pubDec, err := base64.RawStdEncoding.DecodeString(pub)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	block, _ := pem.Decode(pubDec)
-	enc := x509.IsEncryptedPEMBlock(block)
+	enc := x509.IsEncryptedPEMBlock(block) //nolint:staticcheck
 	b := block.Bytes
 	if enc {
 		log.Println("is encrypted pem block")
-		b, err = x509.DecryptPEMBlock(block, nil)
+		b, err = x509.DecryptPEMBlock(block, nil) //nolint:staticcheck
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -96,7 +90,7 @@ func Base64ToPublicKey(pub string) *rsa.PublicKey {
 	return key
 }
 
-// EncryptWithPublicKey encrypts data with public key
+// EncryptWithPublicKey encrypts data with RSA-OAEP using SHA-512.
 func EncryptWithPublicKey(msg []byte, pub *rsa.PublicKey) []byte {
 	hash := sha512.New()
 	ciphertext, err := rsa.EncryptOAEP(hash, rand.Reader, pub, msg, nil)
@@ -106,36 +100,24 @@ func EncryptWithPublicKey(msg []byte, pub *rsa.PublicKey) []byte {
 	return ciphertext
 }
 
-// Split message in multiple chunk before encrypt it to avoid the key size limitation
+// ChunkAndEncrypt encrypts msg in RSA-sized blocks to work around key-size limits.
 func ChunkAndEncrypt(msg []byte, pub *rsa.PublicKey) []byte {
-	hashSize := sha512.Size //Change it if you change hash function in EncryptWithPublicKey
+	hashSize := sha512.Size
 	msgLen := len(msg)
 	step := pub.Size() - 2*hashSize - 2
 	var encryptedBytes []byte
-
 	for start := 0; start < msgLen; start += step {
-		finish := start + step
-		if finish > msgLen {
-			finish = msgLen
-		}
-
-		encryptedBlockBytes := EncryptWithPublicKey(msg[start:finish], pub)
-
-		encryptedBytes = append(encryptedBytes, encryptedBlockBytes...)
+		encryptedBytes = append(encryptedBytes, EncryptWithPublicKey(msg[start:min(start+step, msgLen)], pub)...)
 	}
-
 	return encryptedBytes
 }
 
-// EncryptWithPublicKey encrypts data with public key and encode it with base64
+// Base64EncryptWithPublicKey encrypts and base64-encodes the message.
 func Base64EncryptWithPublicKey(msg []byte, pub *rsa.PublicKey) string {
-	mEncrypted := ChunkAndEncrypt(msg, pub)
-	mEncoded := b64.RawStdEncoding.EncodeToString(mEncrypted)
-
-	return mEncoded
+	return base64.RawStdEncoding.EncodeToString(ChunkAndEncrypt(msg, pub))
 }
 
-// DecryptWithPrivateKey decrypts data with private key
+// DecryptWithPrivateKey decrypts a single RSA-OAEP block.
 func DecryptWithPrivateKey(ciphertext []byte, priv *rsa.PrivateKey) []byte {
 	hash := sha512.New()
 	plaintext, err := rsa.DecryptOAEP(hash, rand.Reader, priv, ciphertext, nil)
@@ -145,36 +127,23 @@ func DecryptWithPrivateKey(ciphertext []byte, priv *rsa.PrivateKey) []byte {
 	return plaintext
 }
 
-// Decrypt a message which has been encrypted using ChunkAndEncrypt
+// DecryptChunked decrypts a message encrypted with ChunkAndEncrypt.
 func DecryptChunked(ciphertext []byte, priv *rsa.PrivateKey) []byte {
 	msgLen := len(ciphertext)
 	step := priv.PublicKey.Size()
 	var decryptedBytes []byte
-
 	for start := 0; start < msgLen; start += step {
-		finish := start + step
-		if finish > msgLen {
-			finish = msgLen
-		}
-
-		decryptedBlockBytes := DecryptWithPrivateKey(ciphertext[start:finish], priv)
-
-		decryptedBytes = append(decryptedBytes, decryptedBlockBytes...)
+		decryptedBytes = append(decryptedBytes, DecryptWithPrivateKey(ciphertext[start:min(start+step, msgLen)], priv)...)
 	}
-
 	return decryptedBytes
 }
 
-// DecryptWithPrivateKey decrypts base64 encoded data with private key
+// Base64DecryptWithPrivateKey base64-decodes then decrypts the message.
 func Base64DecryptWithPrivateKey(ciphertextEnc string, priv *rsa.PrivateKey) []byte {
-	//decode
-	ciphertext, err := b64.RawStdEncoding.DecodeString(ciphertextEnc)
+	ciphertext, err := base64.RawStdEncoding.DecodeString(ciphertextEnc)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	//decrypt
-	plaintext := DecryptChunked(ciphertext, priv)
-	return plaintext
+	return DecryptChunked(ciphertext, priv)
 }
