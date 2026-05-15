@@ -10,7 +10,6 @@ import (
 
 	"github.com/ariary/QueenSono/pkg/message"
 	"golang.org/x/net/icmp"
-	"golang.org/x/net/ipv4"
 )
 
 const triggerPayload = "QS_READY"
@@ -18,7 +17,8 @@ const triggerPayload = "QS_READY"
 // ServeWithEchoReply waits for a QS_READY echo request from the client, then sends
 // data back as chunked ICMP echo replies. listenAddr is the local address to bind.
 func ServeWithEchoReply(listenAddr string, data string, chunkSize, delay int) error {
-	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
+	proto := DetectProto(listenAddr)
+	c, err := icmp.ListenPacket(proto.Network, listenAddr)
 	if err != nil {
 		return fmt.Errorf("listen: %w", err)
 	}
@@ -29,11 +29,11 @@ func ServeWithEchoReply(listenAddr string, data string, chunkSize, delay int) er
 	if err != nil {
 		return fmt.Errorf("read trigger: %w", err)
 	}
-	parsed, err := icmp.ParseMessage(ProtocolICMP, buf[:n])
+	parsed, err := icmp.ParseMessage(proto.Protocol, buf[:n])
 	if err != nil {
 		return fmt.Errorf("parse trigger: %w", err)
 	}
-	if parsed.Type != ipv4.ICMPTypeEcho {
+	if parsed.Type != proto.EchoType {
 		return fmt.Errorf("expected echo request, got %v", parsed.Type)
 	}
 	echo, ok := parsed.Body.(*icmp.Echo)
@@ -49,7 +49,7 @@ func ServeWithEchoReply(listenAddr string, data string, chunkSize, delay int) er
 
 	sendReply := func(payload string, seq int) error {
 		m := icmp.Message{
-			Type: ipv4.ICMPTypeEchoReply,
+			Type: proto.ReplyType,
 			Code: 0,
 			Body: &icmp.Echo{
 				ID:   echo.ID,
@@ -82,19 +82,22 @@ func ServeWithEchoReply(listenAddr string, data string, chunkSize, delay int) er
 // TriggerAndReceiveReplies sends a QS_READY echo request to remoteAddr and reassembles
 // data sent back as chunked ICMP echo replies. listenAddr is the local address to bind.
 func TriggerAndReceiveReplies(listenAddr, remoteAddr string, delay int) (string, error) {
-	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
+	proto := DetectProto(remoteAddr)
+	resolvedListen := ResolveListenAddr(listenAddr, proto)
+
+	c, err := icmp.ListenPacket(proto.Network, resolvedListen)
 	if err != nil {
 		return "", fmt.Errorf("listen: %w", err)
 	}
 	defer c.Close()
 
-	dst, err := net.ResolveIPAddr("ip4", remoteAddr)
+	dst, err := net.ResolveIPAddr(proto.IPNetwork, remoteAddr)
 	if err != nil {
 		return "", fmt.Errorf("resolve %s: %w", remoteAddr, err)
 	}
 
 	trigger := icmp.Message{
-		Type: ipv4.ICMPTypeEcho,
+		Type: proto.EchoType,
 		Code: 0,
 		Body: &icmp.Echo{
 			ID:   os.Getpid() & 0xffff,
@@ -123,8 +126,8 @@ func TriggerAndReceiveReplies(listenAddr, remoteAddr string, delay int) (string,
 		if err != nil {
 			return "", fmt.Errorf("read count reply: %w", err)
 		}
-		parsed, err := icmp.ParseMessage(ProtocolICMP, buf[:pktLen])
-		if err != nil || parsed.Type != ipv4.ICMPTypeEchoReply {
+		parsed, err := icmp.ParseMessage(proto.Protocol, buf[:pktLen])
+		if err != nil || parsed.Type != proto.ReplyType {
 			continue
 		}
 		echo, ok := parsed.Body.(*icmp.Echo)
@@ -153,8 +156,8 @@ func TriggerAndReceiveReplies(listenAddr, remoteAddr string, delay int) (string,
 		if err != nil {
 			return "", fmt.Errorf("read chunk: %w", err)
 		}
-		parsed, err := icmp.ParseMessage(ProtocolICMP, buf[:pktLen])
-		if err != nil || parsed.Type != ipv4.ICMPTypeEchoReply {
+		parsed, err := icmp.ParseMessage(proto.Protocol, buf[:pktLen])
+		if err != nil || parsed.Type != proto.ReplyType {
 			continue
 		}
 		echo, ok := parsed.Body.(*icmp.Echo)

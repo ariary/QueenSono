@@ -14,28 +14,26 @@ import (
 
 	"github.com/ariary/QueenSono/pkg/message"
 	"golang.org/x/net/icmp"
-	"golang.org/x/net/ipv4"
-)
-
-const (
-	ProtocolICMP = 1
 )
 
 // IcmpSendRaw sends a single ICMP echo request without waiting for a reply.
 func IcmpSendRaw(listeningReplyAddr string, remoteAddr string, data string) (*net.IPAddr, error) {
-	c, err := icmp.ListenPacket("ip4:icmp", listeningReplyAddr)
+	proto := DetectProto(remoteAddr)
+	listenAddr := ResolveListenAddr(listeningReplyAddr, proto)
+
+	c, err := icmp.ListenPacket(proto.Network, listenAddr)
 	if err != nil {
 		return nil, err
 	}
 	defer c.Close()
 
-	dst, err := net.ResolveIPAddr("ip4", remoteAddr)
+	dst, err := net.ResolveIPAddr(proto.IPNetwork, remoteAddr)
 	if err != nil {
 		return nil, err
 	}
 
 	m := icmp.Message{
-		Type: ipv4.ICMPTypeEcho, Code: 0,
+		Type: proto.EchoType, Code: 0,
 		Body: &icmp.Echo{
 			ID:   os.Getpid() & 0xffff,
 			Seq:  1,
@@ -59,19 +57,22 @@ func IcmpSendRaw(listeningReplyAddr string, remoteAddr string, data string) (*ne
 // Both send and receive share a single PacketConn so the reply is guaranteed to
 // arrive on the same socket that issued the request.
 func IcmpSendAndWaitForReply(listeningReplyAddr string, remoteAddr string, data string) (*net.IPAddr, time.Duration, error) {
-	c, err := icmp.ListenPacket("ip4:icmp", listeningReplyAddr)
+	proto := DetectProto(remoteAddr)
+	listenAddr := ResolveListenAddr(listeningReplyAddr, proto)
+
+	c, err := icmp.ListenPacket(proto.Network, listenAddr)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer c.Close()
 
-	dst, err := net.ResolveIPAddr("ip4", remoteAddr)
+	dst, err := net.ResolveIPAddr(proto.IPNetwork, remoteAddr)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	m := icmp.Message{
-		Type: ipv4.ICMPTypeEcho, Code: 0,
+		Type: proto.EchoType, Code: 0,
 		Body: &icmp.Echo{
 			ID:   os.Getpid() & 0xffff,
 			Seq:  1,
@@ -101,11 +102,11 @@ func IcmpSendAndWaitForReply(listeningReplyAddr string, remoteAddr string, data 
 	}
 	duration := time.Since(start)
 
-	rm, err := icmp.ParseMessage(ProtocolICMP, reply[:n])
+	rm, err := icmp.ParseMessage(proto.Protocol, reply[:n])
 	if err != nil {
 		return dst, 0, err
 	}
-	if rm.Type != ipv4.ICMPTypeEchoReply {
+	if rm.Type != proto.ReplyType {
 		return dst, 0, fmt.Errorf("got %+v from %v; want echo reply", rm, peer)
 	}
 	return dst, duration, nil
