@@ -22,6 +22,16 @@ func TestChunks_ShorterThanChunkSize(t *testing.T) {
 	}
 }
 
+func TestChunks_EqualToChunkSize(t *testing.T) {
+	result := Chunks("hello", 5)
+	if len(result) != 1 {
+		t.Fatalf("expected 1 chunk, got %d", len(result))
+	}
+	if result[0] != "hello" {
+		t.Fatalf("expected %q, got %q", "hello", result[0])
+	}
+}
+
 func TestChunks_ExactMultiple(t *testing.T) {
 	result := Chunks("abcdef", 2)
 	expected := []string{"ab", "cd", "ef"}

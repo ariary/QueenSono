@@ -11,12 +11,12 @@ import (
 	qsmessage "github.com/ariary/QueenSono/pkg/message"
 	"github.com/schollz/progressbar/v3"
 	"golang.org/x/net/icmp"
-	"golang.org/x/net/ipv4"
 )
 
 // GetMessageSizeAndSender waits for the first ICMP packet announcing the chunk count.
 func GetMessageSizeAndSender(listenAddr string) (size int, sender string, err error) {
-	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
+	proto := DetectProto(listenAddr)
+	c, err := icmp.ListenPacket(proto.Network, listenAddr)
 	if err != nil {
 		return 0, "", fmt.Errorf("listen: %w", err)
 	}
@@ -28,13 +28,13 @@ func GetMessageSizeAndSender(listenAddr string) (size int, sender string, err er
 		return 0, "", fmt.Errorf("read packet: %w", err)
 	}
 
-	msg, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
+	msg, err := icmp.ParseMessage(proto.Protocol, packet[:n])
 	if err != nil {
 		return 0, "", fmt.Errorf("parse packet: %w", err)
 	}
 
 	switch msg.Type {
-	case ipv4.ICMPTypeEcho:
+	case proto.EchoType:
 		echo, ok := msg.Body.(*icmp.Echo)
 		if !ok {
 			return 0, "", fmt.Errorf("unexpected ICMP body type")
@@ -55,7 +55,8 @@ func Serve(listenAddr string, n int, progressBar bool) (data string, missingPack
 	if progressBar {
 		bar = progressbar.Default(int64(n))
 	}
-	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
+	proto := DetectProto(listenAddr)
+	c, err := icmp.ListenPacket(proto.Network, listenAddr)
 	if err != nil {
 		return "", nil, fmt.Errorf("listen: %w", err)
 	}
@@ -74,9 +75,9 @@ func Serve(listenAddr string, n int, progressBar bool) (data string, missingPack
 		go func() {
 			defer wg.Done()
 			if progressBar {
-				getPacketAndBarUpdate(bar, c, dataChunked, indexes, &mu)
+				getPacketAndBarUpdate(bar, c, proto, dataChunked, indexes, &mu)
 			} else {
-				getPacket(c, dataChunked, indexes, &mu)
+				getPacket(c, proto, dataChunked, indexes, &mu)
 			}
 		}()
 	}
@@ -97,7 +98,8 @@ func ServeTemporary(listenAddr string, n int, progressBar bool, delay int) (data
 		bar = progressbar.Default(int64(n))
 	}
 
-	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
+	proto := DetectProto(listenAddr)
+	c, err := icmp.ListenPacket(proto.Network, listenAddr)
 	if err != nil {
 		return "", nil, fmt.Errorf("listen: %w", err)
 	}
@@ -113,9 +115,9 @@ func ServeTemporary(listenAddr string, n int, progressBar bool, delay int) (data
 	for range n {
 		go func() {
 			if progressBar {
-				getPacketAndBarUpdate(bar, c, dataChunked, indexes, &mu)
+				getPacketAndBarUpdate(bar, c, proto, dataChunked, indexes, &mu)
 			} else {
-				getPacket(c, dataChunked, indexes, &mu)
+				getPacket(c, proto, dataChunked, indexes, &mu)
 			}
 		}()
 	}
@@ -129,20 +131,20 @@ func ServeTemporary(listenAddr string, n int, progressBar bool, delay int) (data
 	return data, missingPacketIndexes, nil
 }
 
-func getPacket(c *icmp.PacketConn, data []string, indexes map[int]int, mu *sync.Mutex) {
+func getPacket(c *icmp.PacketConn, proto Proto, data []string, indexes map[int]int, mu *sync.Mutex) {
 	packet := make([]byte, 65535)
 	n, _, err := c.ReadFrom(packet)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read packet: %v\n", err)
 		return
 	}
-	msg, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
+	msg, err := icmp.ParseMessage(proto.Protocol, packet[:n])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "parse packet: %v\n", err)
 		return
 	}
 	switch msg.Type {
-	case ipv4.ICMPTypeEcho:
+	case proto.EchoType:
 		echo, ok := msg.Body.(*icmp.Echo)
 		if !ok {
 			fmt.Fprintf(os.Stderr, "unexpected ICMP body type\n")
@@ -162,20 +164,20 @@ func getPacket(c *icmp.PacketConn, data []string, indexes map[int]int, mu *sync.
 	}
 }
 
-func getPacketAndBarUpdate(bar *progressbar.ProgressBar, c *icmp.PacketConn, data []string, indexes map[int]int, mu *sync.Mutex) {
+func getPacketAndBarUpdate(bar *progressbar.ProgressBar, c *icmp.PacketConn, proto Proto, data []string, indexes map[int]int, mu *sync.Mutex) {
 	packet := make([]byte, 65535)
 	n, _, err := c.ReadFrom(packet)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read packet: %v\n", err)
 		return
 	}
-	msg, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
+	msg, err := icmp.ParseMessage(proto.Protocol, packet[:n])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "parse packet: %v\n", err)
 		return
 	}
 	switch msg.Type {
-	case ipv4.ICMPTypeEcho:
+	case proto.EchoType:
 		echo, ok := msg.Body.(*icmp.Echo)
 		if !ok {
 			fmt.Fprintf(os.Stderr, "unexpected ICMP body type\n")
@@ -198,7 +200,8 @@ func getPacketAndBarUpdate(bar *progressbar.ProgressBar, c *icmp.PacketConn, dat
 
 // IntegrityCheck listens on listenAddr for a hash and exits when it matches.
 func IntegrityCheck(listenAddr, hash string) {
-	c, err := icmp.ListenPacket("ip4:icmp", listenAddr)
+	proto := DetectProto(listenAddr)
+	c, err := icmp.ListenPacket(proto.Network, listenAddr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		return
@@ -212,13 +215,13 @@ func IntegrityCheck(listenAddr, hash string) {
 			fmt.Fprintf(os.Stderr, "read: %v\n", err)
 			continue
 		}
-		msg, err := icmp.ParseMessage(ProtocolICMP, packet[:n])
+		msg, err := icmp.ParseMessage(proto.Protocol, packet[:n])
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "parse: %v\n", err)
 			continue
 		}
 		switch msg.Type {
-		case ipv4.ICMPTypeEcho:
+		case proto.EchoType:
 			echo, ok := msg.Body.(*icmp.Echo)
 			if !ok {
 				continue
